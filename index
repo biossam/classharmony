@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎒 클래스 하모니 - 학생 욕구 진단 및 모둠 매칭</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome 아이콘 CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+    }
+    .custom-title {
+      font-family: 'Gowun Dodum', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+  <!-- TOP NAVIGATION BAR (학생 링크로 오면 숨김 처리됨) -->
+  <header id="main-nav" class="bg-white shadow-sm border-b border-slate-100 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-indigo-100">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <span class="text-xl font-bold tracking-tight text-slate-900 custom-title">클래스 하모니 <span class="text-indigo-600 text-sm font-semibold px-2 py-0.5 bg-indigo-50 rounded-full ml-1">Beta</span></span>
+      </div>
+      <!-- 교사/학생 역할 토글 탭 -->
+      <div class="flex bg-slate-100 p-1 rounded-xl">
+        <button id="btn-tab-teacher" onclick="switchView('teacher')" class="px-4 py-2 text-sm font-medium rounded-lg bg-white text-indigo-600 shadow-sm transition-all duration-200">
+          <i class="fa-solid fa-chalkboard-user mr-1.5"></i>교사 대시보드
+        </button>
+        <button id="btn-tab-student" onclick="switchView('student')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 transition-all duration-200">
+          <i class="fa-solid fa-user-pen mr-1.5"></i>학생 설문 포탈
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- ==============================================
+         1. 교사 대시보드 뷰 (TEACHER VIEW)
+         ============================================== -->
+    <div id="view-teacher" class="space-y-8">
+      
+      <!-- 대시보드 상단 요약 카드 -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">우리 반 설정 인원</p>
+            <h3 id="stat-total-settings" class="text-2xl font-bold text-slate-800 mt-1">21명</h3>
+          </div>
+          <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><i class="fa-solid fa-users text-xl"></i></div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">설문 완료 학생 수</p>
+            <h3 id="stat-submitted" class="text-2xl font-bold text-emerald-600 mt-1">19명</h3>
+          </div>
+          <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><i class="fa-solid fa-circle-check text-xl"></i></div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">미제출 학생 수</p>
+            <h3 id="stat-pending" class="text-2xl font-bold text-amber-500 mt-1">2명</h3>
+          </div>
+          <div class="p-3 bg-amber-50 text-amber-500 rounded-xl"><i class="fa-solid fa-clock text-xl"></i></div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">우리 반 대표 욕구</p>
+            <h3 id="stat-dominant-need" class="text-xl font-bold text-purple-600 mt-1">즐거움</h3>
+          </div>
+          <div class="p-3 bg-purple-50 text-purple-600 rounded-xl"><i class="fa-solid fa-face-laugh-beam text-xl"></i></div>
+        </div>
+      </div>
+
+      <!-- 차트 및 도구 섹션 -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- 왼쪽: 도넛 차트 및 지도 팁 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-7 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-chart-pie mr-2 text-indigo-500"></i>우리 반 욕구 유형 분포</h3>
+              <button onclick="toggleGuidanceTips()" class="px-3.5 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-all">
+                <i class="fa-solid fa-lightbulb mr-1"></i>결과 분석 및 지도 팁 보기
+              </button>
+            </div>
+            
+            <div class="relative w-full max-w-[280px] mx-auto h-[280px] mb-6">
+              <canvas id="needsDoughnutChart"></canvas>
+            </div>
+          </div>
+
+          <!-- 실시간 맞춤 지도 팁 패널 (토글) -->
+          <div id="guidance-tips-panel" class="hidden bg-slate-50 p-5 rounded-xl border border-slate-200 mt-4 animate-fade-in">
+            <h4 class="font-bold text-indigo-900 text-sm mb-2"><i class="fa-solid fa-chalkboard mr-1.5"></i>우리 반 분석 기반 맞춤형 지도 가이드</h4>
+            <p id="guidance-text" class="text-xs text-slate-600 leading-relaxed">학생 진단 데이터를 추가하면, 우리 반 학급 성향에 딱 맞는 맞춤형 학급 생활 지도 팁과 수업 구성 팁이 여기에 실시간으로 구성됩니다.</p>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 설정 및 데이터 도구 -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-5 flex flex-col justify-between space-y-6">
+          <div class="space-y-5">
+            <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-sliders mr-2 text-indigo-500"></i>학급 설정 및 스마트 매칭</h3>
+            
+            <!-- 인원 및 모둠 크기 셋팅 -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">학급 총 인원 수 설정</label>
+                <div class="flex gap-2">
+                  <input type="number" id="input-total-students" value="21" min="5" max="40" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:border-indigo-500">
+                  <button onclick="saveClassSettings()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 transition">설정 저장</button>
+                </div>
+              </div>
+
+              <!-- 가입/입장코드 설정 -->
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">🔑 학생 설문 입장 코드 (Join Code) 설정</label>
+                <div class="flex gap-2">
+                  <input type="text" id="input-join-code" value="1234" placeholder="학생 입장용 비밀번호" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold focus:outline-none focus:border-indigo-500">
+                  <button onclick="saveJoinCodeSettings()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition">코드 저장</button>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">※ 학생들이 자가 진단을 시작하기 위해 입력해야 하는 교실 공통 비밀코드입니다.</p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1.5">모둠당 권장 학생수</label>
+                <select id="select-group-size" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:border-indigo-500">
+                  <option value="4" selected>4명 기준 (상황에 따라 3~5명 매칭)</option>
+                  <option value="5">5명 기준 (상황에 따라 4~6명 매칭)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 더미/초기화 빠른 액션 -->
+            <div class="p-4 bg-slate-50 rounded-xl space-y-2">
+              <span class="text-xs font-bold text-slate-500 block">⚡ 빠른 데모 도구</span>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="generateDummyData()" class="px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-100 transition">
+                  <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>더미 데이터 채우기
+                </button>
+                <button onclick="resetData()" class="px-3 py-2 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-lg hover:bg-rose-100 transition">
+                  <i class="fa-solid fa-trash-can mr-1"></i>데이터 전체 초기화
+                </button>
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">※ '더미 데이터 채우기'를 누르면 설정한 학급 인원에서 2명을 뺀 수(현재 19명)만큼의 진단 데이터가 즉시 완성되어 시뮬레이션할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <button onclick="runHarmoniousMatching()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-100 flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-puzzle-piece text-base"></i>✨ 욕구 균형 하모니 모둠 매칭 실행
+          </button>
+        </div>
+      </div>
+
+      <!-- 모둠 구성 결과 -->
+      <div id="matching-result-section" class="hidden space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+          <h3 class="text-xl font-bold text-slate-950"><i class="fa-solid fa-puzzle-piece text-indigo-500 mr-2"></i>하모니 모둠 매칭 결과</h3>
+          <span class="text-xs font-semibold text-slate-500">서로 다른 욕구를 가진 친구들이 협동할 수 있도록 균형 있게 배치되었습니다.</span>
+        </div>
+        <div id="groups-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- 모둠 카드들이 여기에 동적으로 생성됩니다 -->
+        </div>
+      </div>
+
+      <!-- 학생 진단 리스트 테이블 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+          <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-list-check text-indigo-500 mr-2"></i>우리 반 실시간 진단 상태표</h3>
+          <span class="text-xs font-semibold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full" id="stat-table-counter">제출완료: 19명 / 미제출: 2명</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-100">
+                <th class="px-6 py-4">이름</th>
+                <th class="px-6 py-4">가장 높은 욕구 (Dominant)</th>
+                <th class="px-6 py-4 text-center">생존</th>
+                <th class="px-6 py-4 text-center">사랑/소속</th>
+                <th class="px-6 py-4 text-center">힘/성취</th>
+                <th class="px-6 py-4 text-center">자유</th>
+                <th class="px-6 py-4 text-center">즐거움</th>
+                <th class="px-6 py-4 text-center">모둠</th>
+              </tr>
+            </thead>
+            <tbody id="student-table-body" class="divide-y divide-slate-100 text-sm text-slate-600">
+              <!-- 학생 진단 리스트가 가득 채워집니다 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ==============================================
+         2. 학생용 설문 포탈 뷰 (STUDENT VIEW)
+         ============================================== -->
+    <div id="view-student" class="max-w-2xl mx-auto hidden">
+      
+      <!-- STEP 1: 학생 로그인/이름 + 입장 코드 입력 화면 -->
+      <div id="student-step-login" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6 text-center">
+        <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-sm">
+          <i class="fa-solid fa-user-lock"></i>
+        </div>
+        <div class="space-y-2">
+          <h2 class="text-2xl font-bold text-slate-900 custom-title">학급 욕구 자가 진단 포탈</h2>
+          <p class="text-sm text-slate-400">선생님께 안내받은 본인의 이름과 입장 코드를 정확하게 입력해 주세요.</p>
+        </div>
+        
+        <div class="max-w-xs mx-auto space-y-4">
+          <!-- 이름 입력 -->
+          <div class="text-left">
+            <label class="text-xs font-bold text-slate-400 ml-1">학생 이름</label>
+            <input type="text" id="student-input-name" placeholder="예: 김도윤" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 transition mt-1">
+          </div>
+          <!-- 입장 코드 입력 -->
+          <div class="text-left">
+            <label class="text-xs font-bold text-slate-400 ml-1">🔑 학급 입장 코드 (Join Code)</label>
+            <input type="text" id="student-input-join-code" placeholder="선생님이 정하신 4자리 코드" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 transition mt-1">
+          </div>
+
+          <button onclick="startStudentSurvey()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition-all mt-2">
+            진단 설문 시작하기 <i class="fa-solid fa-arrow-right ml-1"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: 15개 자가 진단 문항 화면 -->
+      <div id="student-step-survey" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        
+        <!-- 설문 진행 상태 바 -->
+        <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
+          <div>
+            <span class="text-xs font-bold text-indigo-600 uppercase">자가 진단 진행 중</span>
+            <h4 id="survey-student-name" class="font-bold text-slate-800 text-base">홍길동 학생</h4>
+          </div>
+          <span id="survey-progress-text" class="text-sm font-bold text-indigo-600">1 / 15 문항</span>
+        </div>
+        <div class="w-full bg-slate-100 h-2">
+          <div id="survey-progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 6.66%;"></div>
+        </div>
+
+        <!-- 질문 내용 및 라디오 척도 -->
+        <div class="p-8 space-y-8">
+          <div class="space-y-4 text-center">
+            <span class="inline-block bg-slate-100 text-slate-500 text-xs font-extrabold px-2.5 py-1 rounded">질문 문항</span>
+            <p id="survey-question-text" class="text-lg md:text-xl font-bold text-slate-900 leading-relaxed">나는 교실이 항상 깨끗하고 정돈되어 있는 것을 좋아한다.</p>
+          </div>
+
+          <!-- 5점 리커트 척도 버튼 -->
+          <div class="grid grid-cols-1 gap-2.5 max-w-md mx-auto pt-4">
+            <button onclick="answerQuestion(5)" class="flex justify-between items-center px-5 py-3.5 border border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 text-left transition duration-200 group">
+              <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-900">매우 그렇다 (5점)</span>
+              <span class="w-6 h-6 rounded-full border border-slate-300 group-hover:bg-indigo-600 group-hover:border-indigo-600 flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check"></i></span>
+            </button>
+            <button onclick="answerQuestion(4)" class="flex justify-between items-center px-5 py-3.5 border border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 text-left transition duration-200 group">
+              <span class="text-sm font-semibold text-slate-600 group-hover:text-indigo-800">그렇다 (4점)</span>
+              <span class="w-6 h-6 rounded-full border border-slate-300 group-hover:bg-indigo-500 group-hover:border-indigo-500 flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check"></i></span>
+            </button>
+            <button onclick="answerQuestion(3)" class="flex justify-between items-center px-5 py-3.5 border border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 text-left transition duration-200 group">
+              <span class="text-sm text-slate-500 group-hover:text-indigo-700">보통이다 (3점)</span>
+              <span class="w-6 h-6 rounded-full border border-slate-300 group-hover:bg-indigo-400 group-hover:border-indigo-400 flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check"></i></span>
+            </button>
+            <button onclick="answerQuestion(2)" class="flex justify-between items-center px-5 py-3.5 border border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 text-left transition duration-200 group">
+              <span class="text-sm text-slate-500 group-hover:text-indigo-700">그렇지 않다 (2점)</span>
+              <span class="w-6 h-6 rounded-full border border-slate-300 group-hover:bg-indigo-400 group-hover:border-indigo-400 flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check"></i></span>
+            </button>
+            <button onclick="answerQuestion(1)" class="flex justify-between items-center px-5 py-3.5 border border-slate-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50/30 text-left transition duration-200 group">
+              <span class="text-sm font-bold text-rose-500 group-hover:text-rose-700">매우 그렇지 않다 (1점)</span>
+              <span class="w-6 h-6 rounded-full border border-slate-300 group-hover:bg-rose-500 group-hover:border-rose-500 flex items-center justify-center text-white text-xs"><i class="fa-solid fa-check"></i></span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: 설문 완료 및 개인 진단 결과 화면 -->
+      <div id="student-step-result" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-6">
+        <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-sm">
+          <i class="fa-solid fa-award"></i>
+        </div>
+        
+        <div>
+          <h2 class="text-2xl font-bold text-slate-900 custom-title">자가 진단이 완료되었습니다!</h2>
+          <p id="student-result-name-text" class="text-sm text-slate-400 mt-1">김도윤 학생의 5가지 욕구 자가 분석 결과 카드입니다.</p>
+        </div>
+
+        <!-- 개인 진단 카드 결과 상자 -->
+        <div class="border border-slate-100 rounded-2xl bg-indigo-50/20 p-6 text-left space-y-4 max-w-md mx-auto">
+          <div class="flex items-center gap-3">
+            <span id="student-result-emoji" class="text-3xl">🧩</span>
+            <div>
+              <span class="text-xs font-bold text-indigo-600 uppercase">대표 욕구 성향</span>
+              <h3 id="student-result-need-title" class="text-xl font-extrabold text-slate-900">생존 성향</h3>
+            </div>
+          </div>
+          
+          <div class="space-y-3.5 pt-3.5 border-t border-indigo-100">
+            <!-- [신규 추가] 한글 욕구 성향 해설 설명란 -->
+            <div>
+              <span class="text-xs font-extrabold text-slate-400 block"><i class="fa-solid fa-book-open mr-1"></i>나의 욕구 성향 설명</span>
+              <p id="student-result-need-desc" class="text-xs text-slate-600 leading-relaxed mt-0.5">성향 한글 해설이 렌더링되는 공간입니다.</p>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-slate-400 block"><i class="fa-solid fa-id-card-clip mr-1"></i>추천 학급 역할 카드</span>
+              <p id="student-result-role-card" class="text-sm font-bold text-slate-800 mt-0.5">안전 수호자</p>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-slate-400 block"><i class="fa-solid fa-circle-info mr-1"></i>역할 상세 설명</span>
+              <p id="student-result-role-desc" class="text-xs text-slate-600 leading-relaxed mt-0.5">교실의 위생과 도구 수량, 교실 내 위험 요소 등을 점검하고 정리하는 든든한 학급 도우미 역할입니다.</p>
+            </div>
+            <div>
+              <span class="text-xs font-extrabold text-slate-400 block"><i class="fa-solid fa-heart mr-1"></i>친구들과 어울리는 한마디 팁</span>
+              <p id="student-result-harmony-tip" class="text-xs text-indigo-700 font-semibold leading-relaxed mt-0.5">"의견이 다를 때 다른 사람의 다른 아이디어도 시도해 볼 수 있도록 여유를 가져 보아요!"</p>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="finishSurveyAndGoHome()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition">
+          처음 화면으로 돌아가기
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ==============================================
+       3. SYSTEM CORE JAVASCRIPT
+       ============================================== -->
+  <script>
+    // 5대 욕구 정보 및 한글 해설 사전 정의
+    const NEEDS_INFO = {
+      survival: {
+        kor: "생존",
+        emoji: "🛡️",
+        needDesc: "안정감, 건강, 청결, 그리고 안전한 규칙을 매우 중요하게 생각하는 성향입니다. 모든 상황이 예측 가능하고 규칙적으로 안전하게 돌아가는 환경 속에서 자신의 역할을 꾸준하고 성실하게 해낼 때 깊은 만족감을 얻습니다.",
+        role: "안전 수호자",
+        roleDesc: "학급 환경 정비, 학급 안전 요건 점검 및 대피 동선 정리, 학급 비품 및 청결을 점검하는 영웅입니다.",
+        harmonyTip: "예상치 못한 규칙의 변화나 즉흥적인 과업이 다소 불편하더라도, 한 발짝만 뒤로 물러서서 친구들의 실험적이고 참신한 발상을 웃으며 맞이해 보아요!",
+        guidanceTip: "안정감이 핵심인 학생입니다. 돌발적이거나 무작위적인 변동 사항을 미리 미리 고지해 주시고, 칭찬할 때도 규칙성 있는 과업 완수를 논리적으로 격려해 주세요."
+      },
+      love: {
+        kor: "사랑/소속",
+        emoji: "❤️",
+        needDesc: "친구들과의 소통, 협동, 그리고 배려를 인생에서 가장 가치 있게 여기는 성향입니다. 혼자 외롭게 공부하는 것보다, 조원들과 따뜻한 눈빛을 교환하고 가벼운 우정을 나누며 끈끈한 소속감을 느낄 때 최고의 행복과 에너지를 얻습니다.",
+        role: "온기 나누미",
+        roleDesc: "모둠 구성원의 생일 챙기기, 소외받는 친구 말 동무하기, 마음을 나누고 위로를 전달하는 화합 수호자입니다.",
+        harmonyTip: "친하지 않았던 모둠 친구와 조가 되더라도 어색해하기보다는, 먼저 용기 내어 상냥하고 귀여운 눈인사를 가볍게 건네주며 대화를 리드해 보아요!",
+        guidanceTip: "관계성이 가장 중요한 원동력입니다. 모둠 구성 시 소외나 배제가 절대로 발생하지 않도록 밀착 조율해 주시고, 선생님께서도 따뜻한 미소와 인정을 자주 건네주세요."
+      },
+      power: {
+        kor: "힘/성취",
+        emoji: "⚡",
+        needDesc: "목표를 완벽하게 성취하고, 남들에게 우수한 실력을 입증하여 능력을 인정받을 때 가장 가슴이 뛰는 성향입니다. 어떠한 난관이 있어도 앞장서서 문제를 해결하고, 학급이나 모둠의 프로젝트 방향을 결정하고 싶어 하는 건강한 리더십 욕구를 품고 있습니다.",
+        role: "전략 기획자",
+        roleDesc: "모둠 과업 단계 수립, 발표 장표 구성 지휘, 학생별 역량 배분 등 프로젝트 방향을 리드하는 브레인 리더입니다.",
+        harmonyTip: "나의 생각과 정교한 기획안이 늘 정답은 아닐 수 있습니다. 조원들의 조금 부족해 보이는 의견이나 엉뚱하고 재미 위주의 상상도 기쁘게 수용해 반영해 봐요!",
+        guidanceTip: "유능함과 공적 보상이 중요한 학생입니다. 다소 도전적이고 난이도 높은 과제를 제안하여 해결감을 주고, 공개적으로 기획 역량과 책임 리더십을 발휘할 판을 제공해 주세요."
+      },
+      freedom: {
+        kor: "자유",
+        emoji: "🕊️",
+        needDesc: "억압이나 과도한 잔소리, 고정된 형식을 거부하며 나만의 주도적 방식으로 행동할 때 짜릿한 열정을 느끼는 성향입니다. 틀에 박힌 뻔한 정답 대신 창의적이고 독립적인 선택권을 보장받을 때 엄청난 잠재력을 폭발시킵니다.",
+        role: "창의 탐험가",
+        roleDesc: "모둠 발표의 톡톡 튀는 형식 구상, 아이디어 스케치 브레인스토밍, 남들과 전혀 다른 관점의 창작을 주도하는 메이커입니다.",
+        harmonyTip: "지나치게 내 생각대로만 규칙을 이탈해 독단적으로 활동하면, 정돈된 흐름을 원하는 모둠 조원들에게 큰 부담이 될 수 있어요. 함께 약속한 최소한의 마지노선 가이드는 꼭 지키며 자유를 누려요!",
+        guidanceTip: "개성과 자율성이 생명인 학생입니다. 미시적인 참견이나 지적을 최소화하고, 수행 결과의 '과업 방식'을 자율적으로 직접 커스텀하여 선택할 수 있는 넓은 범위를 제공해 주시면 능률이 극대화됩니다."
+      },
+      fun: {
+        kor: "즐거움",
+        emoji: "🎉",
+        needDesc: "새로운 호기심을 지치지 않고 탐험하며, 놀이와 공부를 긍정적으로 엮어 웃음을 나눌 때 삶의 이유를 찾는 성향입니다. 지루하고 딱딱한 배움을 흥미로운 게임이나 퀴즈로 승화시키고, 우리 반의 우울한 공기를 한순간에 화사하게 바꿀 수 있는 해피 메이커입니다.",
+        role: "활력 비타민",
+        roleDesc: "발표의 유머 요소 적용하기, 모둠 분위기가 침체될 때 재밌는 말로 긴장 풀어주기, 팀원들의 에너지를 충전하는 활력소입니다.",
+        harmonyTip: "진지한 주의를 필요로 하는 수업 집중 시간이나, 마무리가 시급한 정적인 회의 단계에서는 흥미를 잠깐 낮추고 성실하게 집중하는 진중한 매너를 갖추어 봐요!",
+        guidanceTip: "재미가 주요 동기부여 요소입니다. 수업에 게임, 퀴즈, 미션형 게이미피케이션 요소를 가볍게 추가해 주시는 것만으로도 온몸의 집중 세포를 즉시 깨워 참여를 유도할 수 있습니다."
+      }
+    };
+
+    // 15개 욕구 진단 핵심 문항
+    const QUESTIONS = [
+      { id: 1, type: "survival", text: "나는 교실이나 방이 항상 깨끗하고 정돈되어 있을 때 편안함을 느낀다." },
+      { id: 2, type: "survival", text: "나는 규칙이나 정해진 시간표대로 안전하게 생활하는 것을 선호한다." },
+      { id: 3, type: "survival", text: "나는 다치거나 위험한 행동을 하지 않고 스스로를 안전하게 잘 지킨다." },
+      { id: 4, type: "love", text: "나는 혼자서 공부하는 것보다 친구들과 어울려 모둠 활동을 할 때 더 힘이 난다." },
+      { id: 5, type: "love", text: "나는 우리 반에 아프거나 슬픈 친구가 있을 때 먼저 위로하고 돕고 싶다." },
+      { id: 6, type: "love", text: "나는 우리 반 친구들 모두에게 사랑받고 조화롭게 지내기를 간절히 바란다." },
+      { id: 7, type: "power", text: "나는 우리 학급이나 모둠에서 대장이나 중요한 기획자 역할을 맡고 싶어 한다." },
+      { id: 8, type: "power", text: "나는 대단한 결과물을 성취하여 선생님이나 친구들에게 칭찬받는 것이 무척 기쁘다." },
+      { id: 9, type: "power", text: "나는 친구들 앞에서 내 주장과 계획을 똑똑하게 발표하는 데 자신감을 느낀다." },
+      { id: 10, type: "freedom", text: "나는 정해진 정답 대신 자유롭게 생각하고 남다른 나만의 기발한 방식으로 도전하는 것을 선호한다." },
+      { id: 11, type: "freedom", text: "나는 참견을 많이 받기보다는 혼자서 결정하고 주도적으로 행동하는 독립된 순간이 좋다." },
+      { id: 12, type: "freedom", text: "나는 억압되거나 갇힌 기분이 드는 딱딱한 분위기보다는 편안하게 나를 드러낼 때 능률이 오른다." },
+      { id: 13, type: "fun", text: "나는 학교에서 유머러스한 이야기를 하거나 친구들을 즐겁게 웃길 때 최고의 희열을 느낀다." },
+      { id: 14, type: "fun", text: "나는 공부를 배울 때도 퀴즈, 게임, 흥미로운 영상 등이 넘칠수록 공부가 훨씬 잘 된다." },
+      { id: 15, type: "fun", text: "나는 한 번 호기심이 생겨서 관심이 생긴 분야가 있으면 푹 빠져서 시간 가는 줄 모른다." }
+    ];
+
+    // 19인 프리셋 기본 탑재 더미 데이터
+    const PRESET_STUDENTS = [
+      { name: "김도윤", scoresSum: { survival: 8, love: 11, power: 14, freedom: 9, fun: 10 }, dominantNeed: "power", group: null },
+      { name: "이서연", scoresSum: { survival: 11, love: 15, power: 8, freedom: 10, fun: 11 }, dominantNeed: "love", group: null },
+      { name: "박민준", scoresSum: { survival: 6, love: 10, power: 11, freedom: 15, fun: 12 }, dominantNeed: "freedom", group: null },
+      { name: "최하은", scoresSum: { survival: 7, love: 12, power: 9, freedom: 11, fun: 14 }, dominantNeed: "fun", group: null },
+      { name: "정지우", scoresSum: { survival: 14, love: 10, power: 9, freedom: 8, fun: 11 }, dominantNeed: "survival", group: null },
+      { name: "강서진", scoresSum: { survival: 9, love: 9, power: 15, freedom: 10, fun: 8 }, dominantNeed: "power", group: null },
+      { name: "조현우", scoresSum: { survival: 10, love: 14, power: 9, freedom: 11, fun: 10 }, dominantNeed: "love", group: null },
+      { name: "윤지아", scoresSum: { survival: 8, love: 11, power: 8, freedom: 12, fun: 15 }, dominantNeed: "fun", group: null },
+      { name: "장준서", scoresSum: { survival: 7, love: 9, power: 11, freedom: 14, fun: 11 }, dominantNeed: "freedom", group: null },
+      { name: "임예은", scoresSum: { survival: 15, love: 11, power: 8, freedom: 9, fun: 9 }, dominantNeed: "survival", group: null },
+      { name: "한우진", scoresSum: { survival: 9, love: 10, power: 13, freedom: 11, fun: 9 }, dominantNeed: "power", group: null },
+      { name: "오지민", scoresSum: { survival: 11, love: 14, power: 10, freedom: 9, fun: 11 }, dominantNeed: "love", group: null },
+      { name: "서건우", scoresSum: { survival: 8, love: 11, power: 9, freedom: 10, fun: 15 }, dominantNeed: "fun", group: null },
+      { name: "신유나", scoresSum: { survival: 9, love: 9, power: 10, freedom: 14, fun: 11 }, dominantNeed: "freedom", group: null },
+      { name: "권태현", scoresSum: { survival: 14, love: 10, power: 11, freedom: 7, fun: 9 }, dominantNeed: "survival", group: null },
+      { name: "황수빈", scoresSum: { survival: 10, love: 15, power: 9, freedom: 10, fun: 10 }, dominantNeed: "love", group: null },
+      { name: "송민재", scoresSum: { survival: 8, love: 10, power: 14, freedom: 11, fun: 10 }, dominantNeed: "power", group: null },
+      { name: "전다은", scoresSum: { survival: 7, love: 12, power: 9, freedom: 10, fun: 14 }, dominantNeed: "fun", group: null },
+      { name: "홍윤서", scoresSum: { survival: 8, love: 11, power: 10, freedom: 13, fun: 11 }, dominantNeed: "freedom", group: null }
+    ];
+
+    // 로컬 전역 상태 관리
+    let appState = {
+      settings: {
+        totalStudents: 21,
+        groupSize: 4,
+        joinCode: "1234"
+      },
+      students: []
+    };
+
+    // 실시간 설문 프로세스 임시 상태
+    let currentSurveyState = {
+      studentName: "",
+      currentQuestionIndex: 0,
+      answers: {}
+    };
+
+    let needsChart = null;
+
+    // 초기 가동 및 진단
+    window.onload = function() {
+      initAppState();
+      checkUrlRouting();
+    };
+
+    function initAppState() {
+      const saved = localStorage.getItem("class_harmony_state_v1");
+      if (saved) {
+        appState = JSON.parse(saved);
+        if (!appState.settings.joinCode) {
+          appState.settings.joinCode = "1234";
+        }
+      } else {
+        appState.students = [...PRESET_STUDENTS];
+        saveToLocalStorage();
+      }
+      updateStats();
+      renderStudentTable();
+      renderDoughnutChart();
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem("class_harmony_state_v1", JSON.stringify(appState));
+    }
+
+    // 학생 전용 접속 체크
+    function checkUrlRouting() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const role = urlParams.get('role');
+
+      if (role === 'student') {
+        document.getElementById('main-nav').style.display = 'none';
+        switchView('student');
+      } else {
+        switchView('teacher');
+      }
+    }
+
+    // 역할 뷰어 선택
+    function switchView(viewName) {
+      const btnTeacher = document.getElementById('btn-tab-teacher');
+      const btnStudent = document.getElementById('btn-tab-student');
+      const viewTeacher = document.getElementById('view-teacher');
+      const viewStudent = document.getElementById('view-student');
+
+      if (viewName === 'teacher') {
+        viewTeacher.classList.remove('hidden');
+        viewStudent.classList.add('hidden');
+        
+        btnTeacher.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+        btnTeacher.classList.remove('text-slate-600');
+        btnStudent.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+        btnStudent.classList.add('text-slate-600');
+        
+        updateStats();
+        renderStudentTable();
+        renderDoughnutChart();
+      } else {
+        viewTeacher.classList.add('hidden');
+        viewStudent.classList.remove('hidden');
+        
+        btnStudent.classList.add('bg-white', 'text-indigo-600', 'shadow-sm');
+        btnStudent.classList.remove('text-slate-600');
+        btnTeacher.classList.remove('bg-white', 'text-indigo-600', 'shadow-sm');
+        btnTeacher.classList.add('text-slate-600');
+        
+        resetStudentSurveyFlow();
+      }
+    }
+
+    // 카드 통계 갱신
+    function updateStats() {
+      const totalSettings = appState.settings.totalStudents;
+      const submitted = appState.students.length;
+      const pending = Math.max(0, totalSettings - submitted);
+      const joinCode = appState.settings.joinCode || "1234";
+
+      document.getElementById('stat-total-settings').innerText = `${totalSettings}명`;
+      document.getElementById('stat-submitted').innerText = `${submitted}명`;
+      document.getElementById('stat-pending').innerText = `${pending}명`;
+      document.getElementById('input-total-students').value = totalSettings;
+      document.getElementById('input-join-code').value = joinCode;
+
+      document.getElementById('stat-table-counter').innerText = `제출완료: ${submitted}명 / 미제출: ${pending}명`;
+
+      if (appState.students.length > 0) {
+        const counts = { survival: 0, love: 0, power: 0, freedom: 0, fun: 0 };
+        appState.students.forEach(s => counts[s.dominantNeed]++);
+        
+        let topNeed = "survival";
+        Object.keys(counts).forEach(key => {
+          if (counts[key] > counts[topNeed]) topNeed = key;
+        });
+
+        document.getElementById('stat-dominant-need').innerText = NEEDS_INFO[topNeed].kor;
+        
+        const targetTip = NEEDS_INFO[topNeed].guidanceTip;
+        document.getElementById('guidance-text').innerHTML = `
+          우리 반은 <strong>[${NEEDS_INFO[topNeed].kor}]</strong> 욕구가 가장 강한 학급입니다.<br><br>
+          👉 <strong>지도 조언:</strong> ${targetTip}
+        `;
+      } else {
+        document.getElementById('stat-dominant-need').innerText = "없음";
+        document.getElementById('guidance-text').innerText = "학생 진단 데이터를 추가하면, 분석 가이드가 작동합니다.";
+      }
+    }
+
+    function toggleGuidanceTips() {
+      const panel = document.getElementById('guidance-tips-panel');
+      panel.classList.toggle('hidden');
+    }
+
+    function saveClassSettings() {
+      const inputVal = parseInt(document.getElementById('input-total-students').value);
+      if (isNaN(inputVal) || inputVal < 1) {
+        alert("학급 인원을 올바른 숫자로 입력해 주세요.");
+        return;
+      }
+      appState.settings.totalStudents = inputVal;
+      saveToLocalStorage();
+      updateStats();
+      alert("학급 설정 인원 수가 반영되었습니다.");
+    }
+
+    function saveJoinCodeSettings() {
+      const inputCode = document.getElementById('input-join-code').value.trim();
+      if (!inputCode) {
+        alert("학생들이 입력할 입장 코드를 1글자 이상 입력해 주세요.");
+        return;
+      }
+      appState.settings.joinCode = inputCode;
+      saveToLocalStorage();
+      updateStats();
+      alert(`🔑 학급 입장 코드가 [${inputCode}](으)로 성공적으로 변경되었습니다.`);
+    }
+
+    function generateDummyData() {
+      const targetSize = appState.settings.totalStudents - 2;
+      if (targetSize <= 0) {
+        alert("더미 데이터를 생성하려면 설정된 학급 총 인원이 3명 이상이어야 합니다.");
+        return;
+      }
+
+      const dummyNames = [
+        "김도윤", "이서연", "박민준", "최하은", "정지우", "강서진", "조현우", "윤지아", "장준서", "임예은",
+        "한우진", "오지민", "서건우", "신유나", "권태현", "황수빈", "송민재", "전다은", "홍윤서", "유재석",
+        "김종국", "송지효", "지석진", "하동훈", "이광수", "양세찬", "임윤아", "박보검", "아이유", "현빈"
+      ];
+
+      appState.students = [];
+
+      for (let i = 0; i < targetSize; i++) {
+        const name = dummyNames[i % dummyNames.length] + (Math.floor(i / dummyNames.length) > 0 ? Math.floor(i / dummyNames.length) + 1 : "");
+        
+        const survival = getRandomSum();
+        const love = getRandomSum();
+        const power = getRandomSum();
+        const freedom = getRandomSum();
+        const fun = getRandomSum();
+
+        const scoresSum = { survival, love, power, freedom, fun };
+        
+        let dominantNeed = "survival";
+        Object.keys(scoresSum).forEach(key => {
+          if (scoresSum[key] > scoresSum[dominantNeed]) {
+            dominantNeed = key;
+          }
+        });
+
+        appState.students.push({
+          name: name,
+          scoresSum: scoresSum,
+          dominantNeed: dominantNeed,
+          group: null
+        });
+      }
+
+      saveToLocalStorage();
+      updateStats();
+      renderStudentTable();
+      renderDoughnutChart();
+      alert(`데모용 실시간 가상 학생 데이터 ${targetSize}개가 생성 완료되었습니다!`);
+    }
+
+    function getRandomSum() {
+      return Math.floor(Math.random() * 5 + 1) + Math.floor(Math.random() * 5 + 1) + Math.floor(Math.random() * 5 + 1);
+    }
+
+    function resetData() {
+      if (confirm("정말로 축적된 모든 학생 진단 데이터를 삭제하고 초기화하시겠습니까?")) {
+        appState.students = [];
+        saveToLocalStorage();
+        updateStats();
+        renderStudentTable();
+        renderDoughnutChart();
+        document.getElementById('matching-result-section').classList.add('hidden');
+        alert("초기화 완료되었습니다.");
+      }
+    }
+
+    function renderDoughnutChart() {
+      const counts = { survival: 0, love: 0, power: 0, freedom: 0, fun: 0 };
+      appState.students.forEach(s => counts[s.dominantNeed]++);
+
+      const dataValues = [counts.survival, counts.love, counts.power, counts.freedom, counts.fun];
+
+      if (needsChart) {
+        needsChart.destroy();
+      }
+
+      const ctx = document.getElementById('needsDoughnutChart').getContext('2d');
+      needsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['🛡️ 생존', '❤️ 사랑/소속', '⚡ 힘/성취', '🕊️ 자유', '🎉 즐거움'],
+          datasets: [{
+            data: dataValues,
+            backgroundColor: [
+              '#64748b',
+              '#f43f5e',
+              '#f59e0b',
+              '#06b6d4',
+              '#8b5cf6'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                font: { size: 11, weight: 'bold' }
+              }
+            }
+          },
+          cutout: '60%'
+        }
+      });
+    }
+
+    function renderStudentTable() {
+      const tbody = document.getElementById('student-table-body');
+      tbody.innerHTML = "";
+
+      if (appState.students.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+              <i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>
+              제출 완료된 학생 진단 데이터가 존재하지 않습니다.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      appState.students.forEach((student) => {
+        const info = NEEDS_INFO[student.dominantNeed];
+        const groupText = student.group ? `<span class="bg-indigo-600 text-white font-bold px-2 py-1 rounded text-xs">${student.group} 모둠</span>` : `<span class="text-slate-300">-</span>`;
+        
+        let badgeStyle = "";
+        if (student.dominantNeed === 'survival') badgeStyle = "bg-slate-100 text-slate-700";
+        else if (student.dominantNeed === 'love') badgeStyle = "bg-rose-50 text-rose-600";
+        else if (student.dominantNeed === 'power') badgeStyle = "bg-amber-50 text-amber-600";
+        else if (student.dominantNeed === 'freedom') badgeStyle = "bg-cyan-50 text-cyan-600";
+        else if (student.dominantNeed === 'fun') badgeStyle = "bg-purple-50 text-purple-600";
+
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-6 py-4 font-bold text-slate-900">${student.name}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-1.5 rounded-lg text-xs font-bold ${badgeStyle}">
+                ${info.emoji} ${info.kor} 성향
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center font-medium">${student.scoresSum.survival}</td>
+            <td class="px-6 py-4 text-center font-medium">${student.scoresSum.love}</td>
+            <td class="px-6 py-4 text-center font-medium">${student.scoresSum.power}</td>
+            <td class="px-6 py-4 text-center font-medium">${student.scoresSum.freedom}</td>
+            <td class="px-6 py-4 text-center font-medium">${student.scoresSum.fun}</td>
+            <td class="px-6 py-4 text-center">${groupText}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // 하모니 지그재그 모둠 매칭
+    function runHarmoniousMatching() {
+      const N = appState.students.length;
+      if (N < 3) {
+        alert("모둠을 자동으로 배정하려면 최소 3인 이상의 학생 진단이 완료되어야 합니다.");
+        return;
+      }
+
+      const targetSize = parseInt(document.getElementById('select-group-size').value);
+      const numberOfGroups = Math.max(1, Math.round(N / targetSize));
+
+      let groups = Array.from({ length: numberOfGroups }, (_, idx) => ({
+        id: idx + 1,
+        members: []
+      }));
+
+      const categorized = { survival: [], love: [], power: [], freedom: [], fun: [] };
+      appState.students.forEach(st => {
+        categorized[st.dominantNeed].push(st);
+      });
+
+      let distributionQueue = [];
+      const keys = ['survival', 'love', 'power', 'freedom', 'fun'];
+      let hasMore = true;
+      let roundIndex = 0;
+
+      while (hasMore) {
+        hasMore = false;
+        keys.forEach(key => {
+          if (categorized[key].length > roundIndex) {
+            distributionQueue.push(categorized[key][roundIndex]);
+            hasMore = true;
+          }
+        });
+        roundIndex++;
+      }
+
+      let asc = true;
+      let currentGroupIdx = 0;
+
+      distributionQueue.forEach(student => {
+        groups[currentGroupIdx].members.push(student);
+
+        if (asc) {
+          if (currentGroupIdx === numberOfGroups - 1) {
+            asc = false;
+          } else {
+            currentGroupIdx++;
+          }
+        } else {
+          if (currentGroupIdx === 0) {
+            asc = true;
+          } else {
+            currentGroupIdx--;
+          }
+        }
+      });
+
+      groups.forEach(g => {
+        g.members.forEach(member => {
+          const origin = appState.students.find(s => s.name === member.name);
+          if (origin) origin.group = g.id;
+        });
+      });
+
+      saveToLocalStorage();
+      renderStudentTable();
+      renderGroupResults(groups);
+      
+      const resultSec = document.getElementById('matching-result-section');
+      resultSec.classList.remove('hidden');
+      resultSec.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderGroupResults(groups) {
+      const container = document.getElementById('groups-container');
+      container.innerHTML = "";
+
+      groups.forEach(g => {
+        let memberItemsHtml = "";
+        
+        g.members.forEach(member => {
+          const info = NEEDS_INFO[member.dominantNeed];
+          
+          let badgeColor = "";
+          if (member.dominantNeed === 'survival') badgeColor = "bg-slate-100 text-slate-700 border-slate-200";
+          else if (member.dominantNeed === 'love') badgeColor = "bg-rose-50 text-rose-600 border-rose-100";
+          else if (member.dominantNeed === 'power') badgeColor = "bg-amber-50 text-amber-600 border-amber-100";
+          else if (member.dominantNeed === 'freedom') badgeColor = "bg-cyan-50 text-cyan-600 border-cyan-100";
+          else if (member.dominantNeed === 'fun') badgeColor = "bg-purple-50 text-purple-600 border-purple-100";
+
+          memberItemsHtml += `
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5">
+              <span class="text-2xl mt-0.5">${info.emoji}</span>
+              <div class="space-y-0.5 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-900">${member.name}</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}">${info.kor}</span>
+                </div>
+                <p class="text-[11px] font-bold text-indigo-700 leading-tight">역할: ${info.role}</p>
+                <p class="text-[10px] text-slate-400 leading-tight">${info.roleDesc}</p>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML += `
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="font-bold text-slate-950 text-base"><i class="fa-solid fa-puzzle-piece text-indigo-500 mr-1.5"></i>${g.id} 모둠</h4>
+                <span class="text-xs font-semibold text-slate-400">구성원: ${g.members.length}명</span>
+              </div>
+              <div class="space-y-3">
+                ${memberItemsHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    // ==============================================
+    // 🔑 학생 설문 로그인 및 보안 로드
+    // ==============================================
+    function resetStudentSurveyFlow() {
+      document.getElementById('student-input-name').value = "";
+      document.getElementById('student-input-join-code').value = "";
+      document.getElementById('student-step-login').classList.remove('hidden');
+      document.getElementById('student-step-survey').classList.add('hidden');
+      document.getElementById('student-step-result').classList.add('hidden');
+    }
+
+    function startStudentSurvey() {
+      const name = document.getElementById('student-input-name').value.trim();
+      const codeInput = document.getElementById('student-input-join-code').value.trim();
+      const correctCode = appState.settings.joinCode || "1234";
+
+      if (!name) {
+        alert("이름을 꼭 입력해 주세요!");
+        return;
+      }
+
+      if (!codeInput) {
+        alert("선생님께 안내받은 입장 코드를 입력해 주세요!");
+        return;
+      }
+
+      if (codeInput.toLowerCase() !== correctCode.toLowerCase()) {
+        alert("❌ 입장 코드가 올바르지 않습니다!\n선생님 대시보드에 설정된 비밀 코드를 다시 한 번 확인해 주세요.");
+        return;
+      }
+
+      currentSurveyState.studentName = name;
+      currentSurveyState.currentQuestionIndex = 0;
+      currentSurveyState.answers = {};
+
+      document.getElementById('student-step-login').classList.add('hidden');
+      document.getElementById('student-step-survey').classList.remove('hidden');
+
+      renderSurveyQuestion();
+    }
+
+    function renderSurveyQuestion() {
+      const currentIdx = currentSurveyState.currentQuestionIndex;
+      const question = QUESTIONS[currentIdx];
+
+      document.getElementById('survey-student-name').innerText = `${currentSurveyState.studentName} 학생`;
+      document.getElementById('survey-progress-text').innerText = `${currentIdx + 1} / 15 문항`;
+      
+      const progressPercent = ((currentIdx + 1) / 15) * 100;
+      document.getElementById('survey-progress-bar').style.width = `${progressPercent}%`;
+
+      document.getElementById('survey-question-text').innerText = question.text;
+    }
+
+    function answerQuestion(score) {
+      const currentIdx = currentSurveyState.currentQuestionIndex;
+      const question = QUESTIONS[currentIdx];
+
+      currentSurveyState.answers[question.id] = score;
+
+      if (currentIdx < 14) {
+        currentSurveyState.currentQuestionIndex++;
+        renderSurveyQuestion();
+      } else {
+        submitStudentSurvey();
+      }
+    }
+
+    function submitStudentSurvey() {
+      let sums = { survival: 0, love: 0, power: 0, freedom: 0, fun: 0 };
+      
+      QUESTIONS.forEach(q => {
+        const score = currentSurveyState.answers[q.id];
+        sums[q.type] += score;
+      });
+
+      let dominant = "survival";
+      Object.keys(sums).forEach(key => {
+        if (sums[key] > sums[dominant]) {
+          dominant = key;
+        }
+      });
+
+      const existingIdx = appState.students.findIndex(s => s.name === currentSurveyState.studentName);
+      const studentRecord = {
+        name: currentSurveyState.studentName,
+        scoresSum: sums,
+        dominantNeed: dominant,
+        group: null
+      };
+
+      if (existingIdx > -1) {
+        appState.students[existingIdx] = studentRecord;
+      } else {
+        appState.students.push(studentRecord);
+      }
+
+      saveToLocalStorage();
+
+      // [신규 갱신] 한글 해설 매핑하여 렌더링
+      const info = NEEDS_INFO[dominant];
+      document.getElementById('student-result-name-text').innerText = `${currentSurveyState.studentName} 학생의 5가지 욕구 자가 분석 결과 카드입니다.`;
+      document.getElementById('student-result-emoji').innerText = info.emoji;
+      document.getElementById('student-result-need-title').innerText = `${info.kor} 성향`;
+      
+      // 5대 욕구에 대한 한글 성향 해설 주입
+      document.getElementById('student-result-need-desc').innerText = info.needDesc;
+      
+      document.getElementById('student-result-role-card').innerText = info.role;
+      document.getElementById('student-result-role-desc').innerText = info.roleDesc;
+      document.getElementById('student-result-harmony-tip').innerText = `"${info.harmonyTip}"`;
+
+      document.getElementById('student-step-survey').classList.add('hidden');
+      document.getElementById('student-step-result').classList.remove('hidden');
+    }
+
+    function finishSurveyAndGoHome() {
+      resetStudentSurveyFlow();
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const role = urlParams.get('role');
+      if (role !== 'student') {
+        switchView('teacher');
+      }
+    }
+  </script>
+</body>
+</html>
