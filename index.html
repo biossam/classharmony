@@ -83,35 +83,44 @@
         </div>
       </div>
 
-      <!-- 차트 및 도구 섹션 -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- 차트 및 도구 섹션 (노트북 대화면 최적화 레이아웃) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        <!-- 왼쪽: 도넛 차트 및 지도 팁 -->
+        <!-- 왼쪽: 도넛 차트 및 지도 팁 (노트북에서 2분할 가로 배치) -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-7 flex flex-col justify-between">
           <div>
-            <div class="flex justify-between items-center mb-6">
+            <!-- 카드 헤더 영역 -->
+            <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
               <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-chart-pie mr-2 text-indigo-500"></i>우리 반 욕구 유형 분포</h3>
               <button onclick="toggleGuidanceTips()" class="px-3.5 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-all">
-                <i class="fa-solid fa-lightbulb mr-1"></i>결과 분석 및 지도 팁 보기
+                <i class="fa-solid fa-lightbulb mr-1"></i>지도 가이드 <span id="tips-btn-text">접기</span>
               </button>
             </div>
             
-            <div class="relative w-full max-w-[280px] mx-auto h-[280px] mb-6">
-              <canvas id="needsDoughnutChart"></canvas>
+            <!-- 콘텐츠 영역 (그리드 분할로 넓은 여백 제거) -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+              <!-- 차트 그래픽 영역 -->
+              <div id="chart-wrapper" class="md:col-span-5 flex justify-center">
+                <div class="relative w-full max-w-[220px] h-[220px]">
+                  <canvas id="needsDoughnutChart"></canvas>
+                </div>
+              </div>
+              
+              <!-- 맞춤 지도 팁 영역 (항상 깔끔히 우측에 배치) -->
+              <div id="guidance-tips-panel" class="md:col-span-7">
+                <div class="bg-slate-50 p-5 rounded-xl border border-slate-150 flex flex-col justify-center min-h-[220px]">
+                  <h4 class="font-bold text-indigo-900 text-xs mb-2"><i class="fa-solid fa-chalkboard-user mr-1.5"></i>우리 반 맞춤형 생활지도 가이드</h4>
+                  <p id="guidance-text" class="text-xs text-slate-600 leading-relaxed">학생 진단 데이터를 추가하면, 우리 반 학급 성향에 딱 맞는 맞춤형 학급 생활 지도 팁과 수업 구성 팁이 여기에 실시간으로 구성됩니다.</p>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <!-- 실시간 맞춤 지도 팁 패널 (토글) -->
-          <div id="guidance-tips-panel" class="hidden bg-slate-50 p-5 rounded-xl border border-slate-200 mt-4 animate-fade-in">
-            <h4 class="font-bold text-indigo-900 text-sm mb-2"><i class="fa-solid fa-chalkboard mr-1.5"></i>우리 반 분석 기반 맞춤형 지도 가이드</h4>
-            <p id="guidance-text" class="text-xs text-slate-600 leading-relaxed">학생 진단 데이터를 추가하면, 우리 반 학급 성향에 딱 맞는 맞춤형 학급 생활 지도 팁과 수업 구성 팁이 여기에 실시간으로 구성됩니다.</p>
           </div>
         </div>
 
         <!-- 오른쪽: 설정 및 데이터 도구 -->
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-5 flex flex-col justify-between space-y-6">
           <div class="space-y-5">
-            <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-sliders mr-2 text-indigo-500"></i>학급 설정 및 스마트 매칭</h3>
+            <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4"><i class="fa-solid fa-sliders mr-2 text-indigo-500"></i>학급 설정 및 스마트 매칭</h3>
             
             <!-- 인원 및 모둠 크기 셋팅 -->
             <div class="space-y-4">
@@ -153,7 +162,6 @@
                   <i class="fa-solid fa-trash-can mr-1"></i>데이터 전체 초기화
                 </button>
               </div>
-              <p class="text-[10px] text-slate-400 mt-1">※ '더미 데이터 채우기'를 누르면 설정한 학급 인원에서 2명을 뺀 수(현재 19명)만큼의 진단 데이터가 즉시 완성되어 시뮬레이션할 수 있습니다.</p>
             </div>
           </div>
 
@@ -408,7 +416,7 @@
       { id: 15, type: "fun", text: "나는 한 번 호기심이 생겨서 관심이 생긴 분야가 있으면 푹 빠져서 시간 가는 줄 모른다." }
     ];
 
-    // 19인 프리셋 기본 탑재 더미 데이터 (오타 완전히 수정 완료!)
+    // 19인 프리셋 기본 탑재 더미 데이터
     const PRESET_STUDENTS = [
       { name: "김도윤", scoresSum: { survival: 8, love: 11, power: 14, freedom: 9, fun: 10 }, dominantNeed: "power", group: null },
       { name: "이서연", scoresSum: { survival: 11, love: 15, power: 8, freedom: 10, fun: 11 }, dominantNeed: "love", group: null },
@@ -456,7 +464,7 @@
       checkUrlRouting();
     };
 
-    // 로컬 스토리지 데이터 로드 (클래스 2 버전 업그레이드로 이전 충돌 데이터 리셋!)
+    // 로컬 스토리지 데이터 로드 (버전2 업그레이드 충돌 방지)
     function initAppState() {
       const saved = localStorage.getItem("class_harmony_state_v2");
       if (saved) {
@@ -465,7 +473,6 @@
           appState.settings.joinCode = "1234";
         }
       } else {
-        // 기존 깨진 임시 데이터 강제 파괴 후 새로 가동
         localStorage.removeItem("class_harmony_state_v1");
         appState.students = JSON.parse(JSON.stringify(PRESET_STUDENTS));
         saveToLocalStorage();
@@ -561,9 +568,21 @@
       }
     }
 
+    // [신규 튜닝] 노트북 가변 폭 대응 실시간 접기/펴기 로직
     function toggleGuidanceTips() {
       const panel = document.getElementById('guidance-tips-panel');
-      panel.classList.toggle('hidden');
+      const chartWrapper = document.getElementById('chart-wrapper');
+      const btnText = document.getElementById('tips-btn-text');
+      
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        chartWrapper.className = "md:col-span-5 flex justify-center";
+        btnText.innerText = "접기";
+      } else {
+        panel.classList.add('hidden');
+        chartWrapper.className = "md:col-span-12 flex justify-center";
+        btnText.innerText = "보기";
+      }
     }
 
     function saveClassSettings() {
@@ -745,7 +764,7 @@
       });
     }
 
-    // 하모니 스네이크 드래프트 기반 모둠 구성 알고리즘
+    // 하모니 모둠 편성 알고리즘
     function runHarmoniousMatching() {
       const N = appState.students.length;
       if (N < 3) {
@@ -966,13 +985,11 @@
 
       saveToLocalStorage();
 
-      // 한글 해설 매핑하여 렌더링
       const info = NEEDS_INFO[dominant];
       document.getElementById('student-result-name-text').innerText = `${currentSurveyState.studentName} 학생의 5가지 욕구 자가 분석 결과 카드입니다.`;
       document.getElementById('student-result-emoji').innerText = info.emoji;
       document.getElementById('student-result-need-title').innerText = `${info.kor} 성향`;
       
-      // 5대 욕구에 대한 한글 성향 해설 주입
       document.getElementById('student-result-need-desc').innerText = info.needDesc;
       
       document.getElementById('student-result-role-card').innerText = info.role;
