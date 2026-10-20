@@ -73,7 +73,7 @@ function submit_(d) {
   if (!name) return json_({ ok: false, error: '이름을 입력해 주세요.' });
   const s = d.scores || {};
   const vals = NEEDS.map((k) => Number(s[k]));
-  if (vals.some((v) => !(v >= 3 && v <= 15) || Math.round(v) !== v)) return json_({ ok: false, error: '설문 점수가 올바르지 않아요.' });
+  if (vals.some((v) => !(v >= 3 && v <= 25) || Math.round(v) !== v)) return json_({ ok: false, error: '설문 점수가 올바르지 않아요.' });
   let dom = 0;
   vals.forEach((v, i) => { if (v > vals[dom]) dom = i; });
   const sh = sheet_();
