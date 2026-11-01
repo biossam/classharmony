@@ -94,7 +94,8 @@
         <div id="share-local" class="grid md:grid-cols-12 gap-5 items-center">
           <div class="md:col-span-8 text-sm text-slate-600 leading-relaxed">
             지금은 <b>이 기기에만 저장</b>돼요. 태블릿 한 대를 돌려 가며 설문하거나, 선생님 화면으로 한 명씩 받을 때 쓰세요.<br>
-            학생들에게 <b>각자 링크로 나눠 주려면</b> 위의 <b>구글 시트 연결 설정</b>을 먼저 해 주세요.
+            학생들에게 <b>각자 링크로 나눠 주려면</b> 위의 <b>구글 시트 연결 설정</b>을 먼저 해 주세요.<br>
+            <span class="text-xs text-slate-400">🔒 학생 설문 중에는 선생님 비밀번호로 이 화면이 잠겨요. <button onclick="changePin()" class="underline font-semibold text-slate-500">비밀번호 바꾸기</button></span>
           </div>
           <div class="md:col-span-4 flex md:justify-end">
             <button onclick="startLocalStudentMode()" class="px-4 py-3 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700"><i class="fa-solid fa-tablet-screen-button mr-1.5"></i>이 기기로 학생 설문 받기</button>
@@ -138,9 +139,10 @@
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
           <p class="text-xs font-semibold text-slate-400">우리 반 인원</p>
           <div class="flex items-center gap-2 mt-1">
-            <input type="number" id="input-total-students" min="1" max="40" class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-xl font-bold" onchange="saveClassSettings()">
+            <input type="number" id="input-total-students" min="1" max="40" class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-xl font-bold disabled:bg-slate-50 disabled:text-slate-500" onchange="saveClassSettings()">
             <span class="text-lg font-bold text-slate-500">명</span>
           </div>
+          <button onclick="toggleRoster()" class="mt-2 text-xs font-semibold text-indigo-600 underline"><i class="fa-solid fa-list-ul mr-1"></i><span id="roster-btn-text">명단 넣기</span></button>
         </div>
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
           <p class="text-xs font-semibold text-slate-400">설문 완료</p>
@@ -153,6 +155,30 @@
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
           <p class="text-xs font-semibold text-slate-400">우리 반 대표 욕구</p>
           <h3 id="stat-dominant-need" class="text-xl font-bold text-purple-600 mt-1">없음</h3>
+        </div>
+      </div>
+
+      <!-- 우리 반 명단 -->
+      <section id="roster-panel" class="hidden no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-3">
+        <h3 class="text-base font-bold text-slate-900"><i class="fa-solid fa-list-ul mr-2 text-indigo-500"></i>우리 반 명단</h3>
+        <p class="text-xs text-slate-500 leading-relaxed">한 줄에 한 명씩, 또는 쉼표로 나눠 넣어요. 넣으면 <b>아직 안 한 학생</b>과 <b>명단에 없는 이름</b>(잘못 친 이름, 다른 반 학생)이 보여요. 명단은 이 기기에만 저장돼요.</p>
+        <textarea id="input-roster" rows="5" placeholder="김도윤&#10;이서연&#10;박민준" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="saveRoster()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">명단 저장</button>
+          <button onclick="clearRoster()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-100">명단 지우기</button>
+          <span id="roster-msg" class="text-xs font-semibold text-emerald-600 self-center"></span>
+        </div>
+      </section>
+
+      <!-- 아직 안 한 학생 · 명단에 없는 이름 -->
+      <div id="roster-status" class="hidden no-print grid md:grid-cols-2 gap-4">
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <p class="text-xs font-bold text-amber-800 mb-2">⏳ 아직 안 한 학생 <span id="missing-count"></span></p>
+          <div id="missing-names" class="flex flex-wrap gap-1.5"></div>
+        </div>
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+          <p class="text-xs font-bold text-rose-800 mb-2">❓ 명단에 없는 이름 <span class="font-medium">(잘못 쳤으면 지우고 다시 하게 해 주세요)</span></p>
+          <div id="unknown-names" class="flex flex-wrap gap-1.5"></div>
         </div>
       </div>
 
@@ -372,6 +398,22 @@
   <!-- 역할 카드 (인쇄용) -->
   <div id="cards-print" class="cards-grid"></div>
 
+  <!-- 선생님 비밀번호 (이 기기 모드) -->
+  <div id="pin-modal" class="hidden fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-6">
+    <div class="bg-white rounded-3xl p-7 text-center space-y-4 max-w-sm w-full">
+      <div class="text-4xl">🔒</div>
+      <h3 id="pin-title" class="text-lg font-bold text-slate-900">선생님 비밀번호</h3>
+      <p id="pin-desc" class="text-xs text-slate-500 leading-relaxed"></p>
+      <input id="pin-input" type="password" inputmode="numeric" autocomplete="off" maxlength="12" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center text-2xl font-bold tracking-[0.3em]">
+      <p id="pin-msg" class="text-sm font-semibold text-rose-600 min-h-[1.25rem]"></p>
+      <div class="flex gap-2">
+        <button onclick="closePin()" class="flex-1 py-3 bg-slate-100 text-slate-600 text-sm font-bold rounded-xl">취소</button>
+        <button onclick="submitPin()" class="flex-1 py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl">확인</button>
+      </div>
+      <p id="pin-forgot" class="text-[11px] text-slate-400 leading-relaxed"></p>
+    </div>
+  </div>
+
   <!-- 큰 QR -->
   <div id="qr-modal" class="hidden fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-6" onclick="this.classList.add('hidden')">
     <div class="bg-white rounded-3xl p-8 text-center space-y-4 max-w-lg w-full">
@@ -572,6 +614,7 @@
     let currentSurveyState = { studentName: '', joinCode: '', currentQuestionIndex: 0, answers: {}, result: null };
     let needsChart = null;
     let localStudentMode = false;
+    let renderedRoster = null;
 
     const connected = () => Boolean(api);
     function save() { store.set('class_harmony_state_v3', appState); }
@@ -678,6 +721,42 @@
     }
     function saveAvoid() { store.set('ch_avoid', document.getElementById('input-avoid').value); }
 
+    // ── 우리 반 명단 ──
+    // 이름 비교는 띄어쓰기를 빼고 함 ("홍 길동" = "홍길동")
+    const nkey = (n) => String(n || '').replace(/\s+/g, '');
+    function roster() { return appState.settings.roster || []; }
+    function toggleRoster() {
+      const p = document.getElementById('roster-panel');
+      p.classList.toggle('hidden');
+      document.getElementById('input-roster').value = roster().join('\n');
+      document.getElementById('roster-msg').textContent = '';
+    }
+    function saveRoster() {
+      const seen = new Set();
+      const names = document.getElementById('input-roster').value.split(/[\n,]/).map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 20))
+        .filter((x) => x && !seen.has(nkey(x)) && seen.add(nkey(x)));
+      if (names.length > 40) { alert('명단은 40명까지 넣을 수 있어요.'); return; }
+      appState.settings.roster = names;
+      if (names.length) appState.settings.totalStudents = names.length;
+      save();
+      document.getElementById('input-roster').value = names.join('\n');
+      document.getElementById('roster-msg').textContent = names.length ? `${names.length}명을 저장했어요.` : '명단을 비웠어요.';
+      renderAll();
+    }
+    function clearRoster() {
+      if (!roster().length || !confirm('명단을 지울까요? (설문 결과는 그대로예요)')) return;
+      appState.settings.roster = []; save();
+      document.getElementById('input-roster').value = '';
+      document.getElementById('roster-msg').textContent = '명단을 지웠어요.';
+      renderAll();
+    }
+    function rosterStatus(list) {
+      const r = roster();
+      if (!r.length) return null;
+      const done = new Set(list.map((s) => nkey(s.name))), inRoster = new Set(r.map(nkey));
+      return { missing: r.filter((n) => !done.has(nkey(n))), unknown: list.filter((s) => !inRoster.has(nkey(s.name))).map((s) => s.name), inRoster };
+    }
+
     // ── 예시·초기화·삭제 ──
     function loadDemo() {
       appState.demo = true; save();
@@ -730,11 +809,25 @@
         if (document.activeElement?.id !== 'input-join-code') document.getElementById('input-join-code').value = serverJoinCode;
       }
       // 통계
-      const total = appState.settings.totalStudents;
-      document.getElementById('input-total-students').value = total;
+      // 명단이 있으면 명단 기준으로, 없으면 인원수로 셈 (예시 데이터일 때는 명단을 쓰지 않음)
+      const rs = appState.demo ? null : rosterStatus(list);
+      const total = rs ? roster().length : appState.settings.totalStudents;
+      const pending = rs ? rs.missing.length : Math.max(0, total - list.length);
+      const inp = document.getElementById('input-total-students');
+      inp.value = total; inp.disabled = Boolean(rs);
+      inp.title = rs ? '명단에 넣은 인원이에요. 바꾸려면 명단을 고쳐 주세요.' : '';
+      document.getElementById('roster-btn-text').textContent = roster().length ? `명단 고치기 (${roster().length}명)` : '명단 넣기';
       document.getElementById('stat-submitted').textContent = `${list.length}명`;
-      document.getElementById('stat-pending').textContent = `${Math.max(0, total - list.length)}명`;
-      document.getElementById('stat-table-counter').textContent = `제출 ${list.length}명 / 미제출 ${Math.max(0, total - list.length)}명`;
+      document.getElementById('stat-pending').textContent = `${pending}명`;
+      document.getElementById('stat-table-counter').textContent = `제출 ${list.length}명 / 미제출 ${pending}명`;
+      document.getElementById('roster-status').classList.toggle('hidden', !rs);
+      if (rs) {
+        const chip = (n, c) => `<span class="px-2 py-1 rounded-lg text-xs font-bold ${c}">${esc(n)}</span>`;
+        document.getElementById('missing-count').textContent = `${rs.missing.length}명`;
+        document.getElementById('missing-names').innerHTML = rs.missing.length ? rs.missing.map((n) => chip(n, 'bg-white text-amber-800 border border-amber-200')).join('') : '<span class="text-xs text-amber-700">모두 했어요! 🎉</span>';
+        document.getElementById('unknown-names').innerHTML = rs.unknown.length ? rs.unknown.map((n) => chip(n, 'bg-white text-rose-700 border border-rose-200')).join('') : '<span class="text-xs text-rose-700">없어요 👍</span>';
+      }
+      renderedRoster = rs;
       const counts = Object.fromEntries(NEED_KEYS.map((k) => [k, 0]));
       list.forEach((s) => counts[dominantOf(s)]++);
       if (list.length) {
@@ -779,7 +872,7 @@
       tbody.innerHTML = list.map((s) => {
         const d = dominantOf(s), info = NEEDS_INFO[d], g = groupOf(s.name);
         return `<tr class="hover:bg-slate-50/50">
-          <td class="px-5 py-3 font-bold text-slate-900">${esc(s.name)}</td>
+          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(nkey(s.name)) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${s.time ? `<span class="block text-[10px] text-slate-400">${esc(s.time)} 제출</span>` : ''}</td>
           <td class="px-5 py-3 whitespace-nowrap"><span class="px-2.5 py-1.5 rounded-lg text-xs font-bold border ${BADGE[d]}">${info.emoji} ${info.kor}</span> <span class="text-xs text-slate-400">${(() => { const r = rankOf(s); return (s.scoresSum[r[0]] === s.scoresSum[r[1]] ? '2위(동점) ' : '2위 ') + NEEDS_INFO[r[1]].emoji + ' ' + NEEDS_INFO[r[1]].kor; })()}</span></td>
           ${NEED_KEYS.map((k) => `<td class="px-3 py-3 text-center font-medium ${k === d ? 'text-indigo-700 font-bold' : ''}">${Number(s.scoresSum[k]) || 0}</td>`).join('')}
           <td class="px-3 py-3 text-center">${g ? `<span class="bg-indigo-600 text-white font-bold px-2 py-1 rounded text-xs">${g}모둠</span>` : '<span class="text-slate-300">-</span>'}</td>
@@ -1084,21 +1177,68 @@
       document.getElementById('view-student').classList.remove('hidden');
       resetStudentSurveyFlow();
     }
+    // ── 이 기기 모드 잠금 ──
+    // 학생이 '선생님 화면으로'를 눌러도 비밀번호를 알아야 반 결과를 볼 수 있음.
+    // 새로고침해도 학생 화면에 머묾(ch_kiosk). 비밀번호는 이 기기에만 해시로 저장.
+    async function pinHash(pin) {
+      const t = 'classharmony:' + pin;
+      try {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t));
+        return [...new Uint8Array(buf)].map((x) => x.toString(16).padStart(2, '0')).join('');
+      } catch {
+        let h = 5381; for (const c of t) h = ((h * 33) ^ c.charCodeAt(0)) >>> 0; return 'h' + h;
+      }
+    }
+    let pinMode = null, pinFirst = '';
+    function openPin(mode) {
+      pinMode = mode; pinFirst = '';
+      const T = {
+        set: ['선생님 비밀번호 만들기', '학생 설문을 받는 동안 선생님 화면을 잠가요. 숫자 4자리 이상으로 정해 주세요. 학생에게 보이지 않게 입력하세요.'],
+        unlock: ['선생님 비밀번호', '선생님 화면으로 돌아가려면 비밀번호를 넣어 주세요.']
+      }[mode];
+      document.getElementById('pin-title').textContent = T[0];
+      document.getElementById('pin-desc').textContent = T[1];
+      document.getElementById('pin-msg').textContent = '';
+      document.getElementById('pin-forgot').textContent = mode === 'unlock' ? '비밀번호를 잊었으면 브라우저 설정에서 이 사이트의 저장 데이터를 지워야 해요. (이 기기에 모인 결과도 함께 지워져요)' : '';
+      const inp = document.getElementById('pin-input'); inp.value = '';
+      document.getElementById('pin-modal').classList.remove('hidden');
+      setTimeout(() => inp.focus(), 50);
+    }
+    let pinChangeOnly = false;
+    function closePin() { document.getElementById('pin-modal').classList.add('hidden'); pinMode = null; pinChangeOnly = false; }
+    async function submitPin() {
+      const pin = document.getElementById('pin-input').value.trim();
+      const msg = document.getElementById('pin-msg');
+      if (pinMode === 'set') {
+        if (!/^\d{4,12}$/.test(pin)) { msg.textContent = '숫자 4자리 이상으로 넣어 주세요.'; return; }
+        if (!pinFirst) { pinFirst = pin; document.getElementById('pin-input').value = ''; document.getElementById('pin-desc').textContent = '확인을 위해 한 번 더 넣어 주세요.'; msg.textContent = ''; return; }
+        if (pin !== pinFirst) { pinFirst = ''; document.getElementById('pin-input').value = ''; document.getElementById('pin-desc').textContent = '처음부터 다시 넣어 주세요.'; msg.textContent = '두 번 넣은 비밀번호가 달라요.'; return; }
+        store.set('ch_pin', await pinHash(pin));
+        closePin();
+        if (pinChangeOnly) { pinChangeOnly = false; alert('비밀번호를 바꿨어요.'); } else enterLocalStudentMode();
+      } else if (pinMode === 'unlock') {
+        if (await pinHash(pin) !== store.get('ch_pin', '')) { msg.textContent = '비밀번호가 맞지 않아요.'; document.getElementById('pin-input').value = ''; return; }
+        closePin();
+        store.del('ch_kiosk'); localStudentMode = false;
+        document.getElementById('local-back').classList.add('hidden');
+        showTeacher();
+      }
+    }
+    document.getElementById('pin-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPin(); });
     function startLocalStudentMode() {
       if (appState.demo && !confirm('예시 데이터를 끄고 실제 설문을 받을까요?')) return;
       appState.demo = false; save();
-      localStudentMode = true;
+      if (!store.get('ch_pin', '')) { openPin('set'); return; }
+      enterLocalStudentMode();
+    }
+    function enterLocalStudentMode() {
+      localStudentMode = true; store.set('ch_kiosk', true);
       document.getElementById('main-nav').style.display = 'none';
       document.getElementById('local-back').classList.remove('hidden');
       showStudent();
     }
-    function backToTeacher() {
-      // 이 기기 모드: 학생이 선생님 화면을 마음대로 열지 못하게 입장 코드 대신 확인
-      if (!confirm('선생님 화면으로 돌아갈까요?')) return;
-      localStudentMode = false;
-      document.getElementById('local-back').classList.add('hidden');
-      showTeacher();
-    }
+    function backToTeacher() { openPin('unlock'); }
+    function changePin() { pinMode = 'set'; openPin('set'); pinChangeOnly = true; }
 
     // ── 학생 설문 ──
     function resetStudentSurveyFlow() {
@@ -1207,7 +1347,8 @@
     }
     function submitStudentSurvey(top) {
       const sums = sumsOf(currentSurveyState.answers);
-      const rec = { name: currentSurveyState.studentName, scoresSum: sums, top };
+      const now = new Date();
+      const rec = { name: currentSurveyState.studentName, scoresSum: sums, top, time: `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` };
       currentSurveyState.result = rec;
       const rk = rankOf(rec), info = NEEDS_INFO[rk[0]];
       document.getElementById('student-result-name-text').textContent = `${rec.name}의 결과예요.`;
@@ -1258,6 +1399,8 @@
         showStudent();
         return;
       }
+      // 학생 설문 중에 새로고침해도 선생님 화면이 열리지 않게
+      if (store.get('ch_kiosk', false) && store.get('ch_pin', '') && !connected()) { enterLocalStudentMode(); return; }
       showTeacher();
       if (connected()) refreshFromServer(true);
     });
