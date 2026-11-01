@@ -3,38 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎒 클래스 하모니 - 학생 욕구 진단 및 모둠 배치</title>
+  <title>클래스 하모니</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gothic+A1:wght@400;500;700;800&display=swap">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // 휴먼스킬아트와 같은 색: 남색 글자(slate), 파랑 강조 한 가지(indigo 자리), 그림자 없음
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: { 50: '#fafafb', 100: '#f1f1f5', 200: '#e3e3ea', 300: '#c9c9d6', 400: '#9a9ab0', 500: '#74748c', 600: '#57577a', 700: '#3d3d66', 800: '#25255a', 900: '#0b0b45', 950: '#0b0b45' },
+            indigo: { 50: '#eef6ff', 100: '#dcedff', 200: '#b9dbfe', 300: '#8cc4fc', 400: '#62b0fb', 500: '#3a9bfa', 600: '#1f7fdc', 700: '#1766b5', 800: '#13528f', 900: '#0f3f6e' }
+          },
+          fontFamily: {
+            sans: ['"Gothic A1"', '"Apple SD Gothic Neo"', '"Malgun Gothic"', 'system-ui', 'sans-serif'],
+            hand: ['Gaegu', '"Nanum Pen Script"', 'cursive']
+          },
+          borderRadius: { lg: '8px', xl: '10px', '2xl': '14px', '3xl': '20px' },
+          boxShadow: { sm: 'none', DEFAULT: 'none', md: 'none', lg: 'none', xl: 'none' }
+        }
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
-    body { font-family: 'Noto Sans KR', sans-serif; }
+    /* 클래스 하모니 — 휴먼스킬아트 사이트와 같은 결: 남색 글자, 파랑 강조 하나, 제목·숫자만 손글씨(개구체).
+       장식 대신 얇은 선과 여백으로 나누고, 귀여움은 학생 화면(큰 손글씨 질문, 표정 버튼)에 모음. */
+    :root { --ink: #0b0b45; --ink-2: #3d3d66; --muted: #74748c; --line: #e3e3ea; --accent: #3a9bfa; --accent-soft: #eef6ff; --hand: 'Gaegu', 'Nanum Pen Script', cursive; }
+    body { font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif; color: var(--ink); word-break: keep-all; -webkit-font-smoothing: antialiased; }
     .hidden { display: none !important; }
-    .custom-title { font-family: 'Gowun Dodum', sans-serif; }
-    .mode-card input:checked + div { border-color: #4f46e5; background: #eef2ff; box-shadow: 0 0 0 2px #c7d2fe; }
-    .member.picked { outline: 3px solid #f59e0b; outline-offset: 1px; background: #fffbeb; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    button, input, select, textarea { font-family: inherit; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    /* 손글씨: 제목, 큰 숫자, 학생 질문 */
+    .custom-title, .brand, #view-teacher h3, #view-student h2, #groups-container h4, .hand { font-family: var(--hand); font-weight: 700; letter-spacing: 0; }
+    .brand { font-size: 1.75rem; line-height: 1; color: var(--ink); text-decoration: none; }
+    #view-teacher h3 { font-size: 1.6rem; line-height: 1.15; color: var(--ink); }
+    #view-teacher h3[id^="stat-"] { font-size: 2.4rem; line-height: 1; }
+    #view-student h2 { font-size: 2.2rem; line-height: 1.15; }
+    #groups-container h4 { font-size: 1.5rem; line-height: 1; }
+    #survey-question-text { font-family: var(--hand); font-weight: 700; font-size: clamp(1.6rem, 5vw, 2.1rem); line-height: 1.3; color: var(--ink); }
+    #student-result-need-title { font-family: var(--hand); font-size: 2.2rem; line-height: 1.1; }
+    .step-emoji { font-size: 3.5rem; line-height: 1; }
+
+    /* 학생 답 버튼: 고르면 파랑 */
+    #survey-answers button { background: #fff; }
+    #survey-answers button.border-indigo-500 { box-shadow: 0 0 0 1px var(--accent); }
+    @media (hover: hover) { #survey-answers button:hover { border-color: #8cc4fc; } }
+
+    .mode-card input:checked + div { border-color: var(--accent); background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent); }
+    .mode-card input:focus-visible + div { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .member.picked { outline: 3px solid #f5b53d; outline-offset: 1px; background: #fff8e8; }
+
+    /* 역할 카드 (화면·인쇄) */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
     #cards-print { display: none; }
-    .role-card { background: #fff; border: 2px solid #c7d2fe; border-radius: 16px; padding: 14px 16px; font-size: 13px; line-height: 1.45; color: #1e293b; break-inside: avoid; page-break-inside: avoid; }
-    .role-card .rc-top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed #c7d2fe; padding-bottom: 6px; }
-    .role-card .rc-top span { font-size: 12px; font-weight: 700; color: #6366f1; }
-    .role-card .rc-top b { font-size: 16px; }
-    .role-card .rc-title { font-size: 20px; font-weight: 900; margin: 8px 0 2px; }
-    .role-card .rc-strength { font-size: 12px; color: #4338ca; font-weight: 700; }
-    .role-card .rc-strength span { color: #64748b; font-weight: 500; }
-    .role-card .rc-label { margin-top: 8px; font-size: 11px; font-weight: 800; color: #64748b; }
+    .role-card { background: #fff; border: 1.5px solid var(--line); border-top: 6px solid var(--accent); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.5; color: var(--ink); break-inside: avoid; page-break-inside: avoid; }
+    .role-card .rc-top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px dashed var(--line); padding-bottom: 6px; }
+    .role-card .rc-top span { font-size: 12px; font-weight: 700; color: var(--muted); }
+    .role-card .rc-top b { font-size: 15px; }
+    .role-card .rc-title { font-family: var(--hand); font-size: 26px; font-weight: 700; line-height: 1.1; margin: 10px 0 2px; }
+    .role-card .rc-strength { font-size: 12px; color: var(--ink-2); font-weight: 700; }
+    .role-card .rc-strength span { color: var(--muted); font-weight: 500; }
+    .role-card .rc-label { margin-top: 10px; font-size: 11px; font-weight: 800; color: var(--muted); }
     .role-card ul { margin: 2px 0 0; padding: 0; list-style: none; }
     .role-card li { margin: 2px 0; }
-    .role-card .rc-proof { font-weight: 700; background: #fef3c7; border-radius: 8px; padding: 4px 8px; margin-top: 2px; }
+    .role-card .rc-proof { font-weight: 700; background: var(--accent-soft); border-radius: 8px; padding: 4px 8px; margin-top: 2px; }
     .role-card .rc-share { font-size: 12px; }
-    .role-card .rc-care { margin-top: 8px; font-size: 12px; color: #b45309; }
-    .role-card .rc-sign { height: 28px; border-bottom: 1px solid #94a3b8; }
+    .role-card .rc-care { margin-top: 10px; font-size: 12px; color: #a3610b; }
+    .role-card .rc-sign { height: 28px; border-bottom: 1px solid #9a9ab0; }
+
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
     @media print {
       body.print-cards > *:not(#cards-print) { display: none !important; }
       body.print-cards #cards-print { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px; }
-      body.print-cards .role-card { border-color: #94a3b8; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body.print-cards .role-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       header, #view-student, .no-print { display: none !important; }
       #view-teacher > *:not(#matching-result-section) { display: none !important; }
       #matching-result-section { display: block !important; }
@@ -45,19 +93,17 @@
 <body class="bg-slate-50 min-h-screen text-slate-800">
 
   <!-- 상단 바: 학생 링크(?role=student)로 오면 숨김 -->
-  <header id="main-nav" class="bg-white shadow-sm border-b border-slate-100 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center gap-3">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-indigo-100 shrink-0">
-          <i class="fa-solid fa-graduation-cap"></i>
-        </div>
-        <span class="text-xl font-bold tracking-tight text-slate-900 custom-title truncate">클래스 하모니 <span class="text-indigo-600 text-sm font-semibold px-2 py-0.5 bg-indigo-50 rounded-full ml-1">교사용</span></span>
+  <header id="main-nav" class="bg-white border-b border-slate-200 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 md:px-8 min-h-[60px] flex justify-between items-center gap-3">
+      <div class="flex items-baseline gap-3 min-w-0">
+        <span class="brand truncate">🎒 클래스 하모니</span>
+        <span class="text-sm text-slate-500 whitespace-nowrap">선생님 화면</span>
       </div>
       <span id="conn-pill" class="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 whitespace-nowrap">📱 이 기기에 저장</span>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-8">
+  <main class="max-w-6xl mx-auto px-4 md:px-8 py-8">
 
     <!-- ==============================================
          1. 교사 대시보드
@@ -65,9 +111,9 @@
     <div id="view-teacher" class="space-y-8 hidden">
 
       <!-- 학생에게 나눠 주기 -->
-      <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 no-print">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
-          <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-share-nodes mr-2 text-indigo-500"></i>학생에게 설문 나눠 주기</h3>
+      <section class="bg-white p-6 rounded-2xl border border-slate-200 no-print">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 mb-5">
+          <h3 class="text-lg font-bold text-slate-900">학생에게 설문 나눠 주기</h3>
           <button onclick="toggleSetup()" class="px-3.5 py-1.5 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"><i class="fa-solid fa-plug mr-1"></i>구글 시트 연결 설정</button>
         </div>
 
@@ -84,7 +130,7 @@
             </label>
           </div>
           <div class="flex flex-wrap gap-2">
-            <button onclick="connectServer()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">연결하기</button>
+            <button onclick="connectServer()" class="px-4 py-2 bg-indigo-500 text-slate-900 text-xs font-bold rounded-lg hover:bg-indigo-400">연결하기</button>
             <button onclick="disconnectServer()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-100">연결 끊고 이 기기 모드로</button>
           </div>
           <p id="setup-msg" class="text-xs font-semibold"></p>
@@ -95,7 +141,7 @@
           <div class="md:col-span-8 text-sm text-slate-600 leading-relaxed">
             지금은 <b>이 기기에만 저장</b>돼요. 태블릿 한 대를 돌려 가며 설문하거나, 선생님 화면으로 한 명씩 받을 때 쓰세요.<br>
             학생들에게 <b>각자 링크로 나눠 주려면</b> 위의 <b>구글 시트 연결 설정</b>을 먼저 해 주세요.<br>
-            <span class="text-xs text-slate-400">🔒 학생 설문 중에는 선생님 비밀번호로 이 화면이 잠겨요. <button onclick="changePin()" class="underline font-semibold text-slate-500">비밀번호 바꾸기</button></span>
+            <span class="text-xs text-slate-500">🔒 학생 설문 중에는 선생님 비밀번호로 이 화면이 잠겨요. <button onclick="changePin()" class="underline font-semibold text-slate-500">비밀번호 바꾸기</button></span>
           </div>
           <div class="md:col-span-4 flex md:justify-end">
             <button onclick="startLocalStudentMode()" class="px-4 py-3 bg-slate-800 text-white text-sm font-bold rounded-xl hover:bg-slate-700"><i class="fa-solid fa-tablet-screen-button mr-1.5"></i>이 기기로 학생 설문 받기</button>
@@ -109,7 +155,7 @@
               <label class="block text-xs font-semibold text-slate-500 mb-1.5">학생용 링크 (설문 화면만 열려요. 결과·모둠은 보이지 않아요)</label>
               <div class="flex gap-2">
                 <input id="student-link" readonly class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-mono bg-slate-50">
-                <button onclick="copyStudentLink()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 whitespace-nowrap"><i class="fa-regular fa-copy mr-1"></i>복사</button>
+                <button onclick="copyStudentLink()" class="px-4 py-2 bg-indigo-500 text-slate-900 text-xs font-bold rounded-lg hover:bg-indigo-400 whitespace-nowrap"><i class="fa-regular fa-copy mr-1"></i>복사</button>
               </div>
             </div>
             <div>
@@ -118,7 +164,7 @@
                 <input type="text" id="input-join-code" maxlength="20" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm font-semibold">
                 <button onclick="saveJoinCodeSettings()" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-slate-700 whitespace-nowrap">코드 저장</button>
               </div>
-              <p class="text-[11px] text-slate-400 mt-1">링크를 아는 다른 반 학생이 제출하지 못하게, 수업 시간에 칠판으로만 알려 주세요.</p>
+              <p class="text-[11px] text-slate-500 mt-1">링크를 아는 다른 반 학생이 제출하지 못하게, 수업 시간에 칠판으로만 알려 주세요.</p>
             </div>
           </div>
           <div class="md:col-span-4 flex flex-col items-center gap-2">
@@ -136,37 +182,37 @@
 
       <!-- 요약 카드 -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 no-print">
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <p class="text-xs font-semibold text-slate-400">우리 반 인원</p>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs font-semibold text-slate-500">우리 반 인원</p>
           <div class="flex items-center gap-2 mt-1">
             <input type="number" id="input-total-students" min="1" max="40" class="w-20 px-2 py-1 border border-slate-200 rounded-lg text-xl font-bold disabled:bg-slate-50 disabled:text-slate-500" onchange="saveClassSettings()">
             <span class="text-lg font-bold text-slate-500">명</span>
           </div>
           <button onclick="toggleRoster()" class="mt-2 text-xs font-semibold text-indigo-600 underline"><i class="fa-solid fa-list-ul mr-1"></i><span id="roster-btn-text">명단 넣기</span></button>
         </div>
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <p class="text-xs font-semibold text-slate-400">설문 완료</p>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs font-semibold text-slate-500">설문 완료</p>
           <h3 id="stat-submitted" class="text-2xl font-bold text-emerald-600 mt-1">0명</h3>
         </div>
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <p class="text-xs font-semibold text-slate-400">아직 안 한 학생</p>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs font-semibold text-slate-500">아직 안 한 학생</p>
           <h3 id="stat-pending" class="text-2xl font-bold text-amber-500 mt-1">0명</h3>
         </div>
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-          <p class="text-xs font-semibold text-slate-400">우리 반 대표 욕구</p>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200">
+          <p class="text-xs font-semibold text-slate-500">우리 반 대표 욕구</p>
           <h3 id="stat-dominant-need" class="text-xl font-bold text-purple-600 mt-1">없음</h3>
         </div>
       </div>
 
       <!-- 우리 반 명단 -->
-      <section id="roster-panel" class="hidden no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-3">
-        <h3 class="text-base font-bold text-slate-900"><i class="fa-solid fa-list-ul mr-2 text-indigo-500"></i>우리 반 명단</h3>
+      <section id="roster-panel" class="hidden no-print bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
+        <h3 class="text-base font-bold text-slate-900">우리 반 명단</h3>
         <p class="text-xs text-slate-500 leading-relaxed">학생은 <b>번호와 닉네임</b>으로만 설문해요. 여기에 번호와 이름을 넣으면 <b>선생님 화면과 인쇄물에서만</b> 실명으로 보이고, <b>아직 안 한 번호</b>와 <b>명단에 없는 번호</b>도 알려 줘요.<br>
           한 줄에 한 명씩 <b>"번호 이름"</b>(예: 7 김도윤)으로 넣거나, 이름만 1번부터 차례대로 넣어도 돼요.</p>
         <p class="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 leading-relaxed">🔒 실명 명단은 <b>이 기기(이 브라우저)에만</b> 저장돼요. 구글 시트나 학생 기기로는 보내지 않아요. 다른 기기에서 쓰려면 그 기기에서 명단을 다시 넣어 주세요.</p>
         <textarea id="input-roster" rows="5" placeholder="1 김도윤&#10;2 이서연&#10;3 박민준" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
         <div class="flex flex-wrap gap-2">
-          <button onclick="saveRoster()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">명단 저장</button>
+          <button onclick="saveRoster()" class="px-4 py-2 bg-indigo-500 text-slate-900 text-xs font-bold rounded-lg hover:bg-indigo-400">명단 저장</button>
           <button onclick="clearRoster()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-100">명단 지우기</button>
           <span id="roster-msg" class="text-xs font-semibold text-emerald-600 self-center"></span>
         </div>
@@ -186,13 +232,13 @@
 
       <!-- 분포 차트 + 모둠 배치 -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch no-print">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-5">
-          <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-6"><i class="fa-solid fa-chart-pie mr-2 text-indigo-500"></i>우리 반 욕구 유형 분포</h3>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 lg:col-span-5">
+          <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-4 mb-6">우리 반 욕구 유형 분포</h3>
           <div class="relative w-full max-w-[240px] h-[240px] mx-auto">
             <canvas id="needsDoughnutChart"></canvas>
           </div>
-          <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <h4 class="font-bold text-indigo-900 text-xs mb-2"><i class="fa-solid fa-chalkboard-user mr-1.5"></i>우리 반 생활지도 팁</h4>
+          <div class="mt-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <h4 class="font-bold text-indigo-900 text-xs mb-2">우리 반 생활지도 팁</h4>
             <p id="guidance-text" class="text-xs text-slate-600 leading-relaxed">학생 결과가 모이면 여기에 팁이 나와요.</p>
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
@@ -201,8 +247,8 @@
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-7 space-y-5">
-          <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4"><i class="fa-solid fa-people-group mr-2 text-indigo-500"></i>과제에 맞는 모둠 만들기</h3>
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 lg:col-span-7 space-y-5">
+          <h3 class="text-lg font-bold text-slate-900 border-b border-slate-200 pb-4">과제에 맞는 모둠 만들기</h3>
           <div>
             <p class="text-xs font-semibold text-slate-500 mb-2">① 어떤 활동인가요?</p>
             <div id="mode-list" class="grid sm:grid-cols-2 gap-3"></div>
@@ -220,10 +266,10 @@
               <textarea id="input-avoid" rows="2" placeholder="한 줄에 한 쌍, 번호나 이름: 3-12" class="mt-1.5 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="saveAvoid()"></textarea>
             </label>
           </div>
-          <button onclick="runHarmoniousMatching()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+          <button onclick="runHarmoniousMatching()" class="w-full py-3.5 bg-indigo-500 hover:bg-indigo-400 text-slate-900 text-sm font-bold rounded-xl flex items-center justify-center gap-2">
             <i class="fa-solid fa-puzzle-piece text-base"></i>모둠 만들기
           </button>
-          <p class="text-[11px] text-slate-400 leading-relaxed">※ 25문항 자기 보고 결과라 <b>참고 자료</b>예요. 친구 관계, 학습 수준, 도움이 필요한 학생은 선생님이 결과에서 이름을 눌러 직접 바꿔 주세요.</p>
+          <p class="text-[11px] text-slate-500 leading-relaxed">※ 25문항 자기 보고 결과라 <b>참고 자료</b>예요. 친구 관계, 학습 수준, 도움이 필요한 학생은 선생님이 결과에서 이름을 눌러 직접 바꿔 주세요.</p>
         </div>
       </div>
 
@@ -231,13 +277,13 @@
       <section id="matching-result-section" class="hidden space-y-4">
         <div class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
           <div>
-            <h3 class="text-xl font-bold text-slate-950"><i class="fa-solid fa-puzzle-piece text-indigo-500 mr-2"></i><span id="result-title">모둠 배치 결과</span></h3>
+            <h3 class="text-xl font-bold text-slate-950"><span id="result-title">모둠 배치 결과</span></h3>
             <p id="result-tip" class="text-xs text-slate-500 mt-1"></p>
           </div>
           <div class="flex flex-wrap gap-2 no-print">
             <button onclick="runHarmoniousMatching()" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-100"><i class="fa-solid fa-shuffle mr-1"></i>다시 섞기</button>
             <button onclick="copyGroups()" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-100"><i class="fa-regular fa-copy mr-1"></i>글로 복사</button>
-            <button onclick="printCards()" class="px-3 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700"><i class="fa-solid fa-id-card mr-1"></i>역할 카드 인쇄</button>
+            <button onclick="printCards()" class="px-3 py-2 bg-indigo-500 text-slate-900 text-xs font-bold rounded-lg hover:bg-indigo-400"><i class="fa-solid fa-id-card mr-1"></i>역할 카드 인쇄</button>
             <button onclick="window.print()" class="px-3 py-2 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-100"><i class="fa-solid fa-print mr-1"></i>명단 인쇄</button>
           </div>
         </div>
@@ -247,9 +293,9 @@
       </section>
 
       <!-- 학생 결과 표 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden no-print">
-        <div class="p-6 border-b border-slate-100 flex flex-wrap gap-3 justify-between items-center">
-          <h3 class="text-lg font-bold text-slate-900"><i class="fa-solid fa-list-check text-indigo-500 mr-2"></i>학생별 설문 결과</h3>
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden no-print">
+        <div class="p-6 border-b border-slate-200 flex flex-wrap gap-3 justify-between items-center">
+          <h3 class="text-lg font-bold text-slate-900">학생별 설문 결과</h3>
           <div class="flex items-center gap-2">
             <span class="text-xs font-semibold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full" id="stat-table-counter"></span>
             <button id="btn-refresh" onclick="refreshFromServer()" class="hidden px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg hover:bg-slate-100"><i class="fa-solid fa-rotate mr-1"></i>새로고침</button>
@@ -258,7 +304,7 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-slate-50 text-slate-400 text-xs font-bold border-b border-slate-100">
+              <tr class="bg-slate-50 text-slate-500 text-xs font-bold border-b border-slate-200">
                 <th class="px-5 py-4">학생</th>
                 <th class="px-5 py-4">1·2순위 욕구</th>
                 <th class="px-3 py-4 text-center">생존</th>
@@ -270,7 +316,7 @@
                 <th class="px-3 py-4 text-center">삭제</th>
               </tr>
             </thead>
-            <tbody id="student-table-body" class="divide-y divide-slate-100 text-sm text-slate-600"></tbody>
+            <tbody id="student-table-body" class="divide-y divide-slate-200 text-sm text-slate-600"></tbody>
           </table>
         </div>
       </div>
@@ -285,46 +331,44 @@
         <button onclick="backToTeacher()" class="text-xs font-semibold text-slate-500 underline"><i class="fa-solid fa-lock mr-1"></i>선생님 화면으로</button>
       </div>
 
-      <div id="student-step-login" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6 text-center">
-        <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-3xl mx-auto shadow-sm">
-          <i class="fa-solid fa-user-pen"></i>
-        </div>
+      <div id="student-step-login" class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6 text-center">
+        <div class="step-emoji" aria-hidden="true">🎒</div>
         <div class="space-y-2">
           <h2 class="text-2xl font-bold text-slate-900 custom-title">나의 마음 욕구 알아보기</h2>
-          <p class="text-sm text-slate-400">내 번호와 선생님이 알려 준 입장 코드를 넣어요.</p>
+          <p class="text-sm text-slate-500">내 번호와 선생님이 알려 준 입장 코드를 넣어요.</p>
         </div>
         <div class="max-w-xs mx-auto space-y-4">
           <div class="text-left">
-            <label for="student-input-no" class="text-xs font-bold text-slate-400 ml-1">내 번호</label>
+            <label for="student-input-no" class="text-xs font-bold text-slate-500 ml-1">내 번호</label>
             <input type="number" id="student-input-no" min="1" max="40" inputmode="numeric" autocomplete="off" placeholder="예: 7" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 mt-1">
           </div>
           <div class="text-left">
-            <label for="student-input-nick" class="text-xs font-bold text-slate-400 ml-1">닉네임 <span class="font-medium">(안 써도 돼요)</span></label>
+            <label for="student-input-nick" class="text-xs font-bold text-slate-500 ml-1">닉네임 <span class="font-medium">(안 써도 돼요)</span></label>
             <input type="text" id="student-input-nick" maxlength="8" autocomplete="off" placeholder="예: 별사탕" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 mt-1">
-            <p class="text-[11px] text-slate-400 mt-1 ml-1">🙈 진짜 이름은 쓰지 마세요. 번호와 닉네임만 써요.</p>
+            <p class="text-[11px] text-slate-500 mt-1 ml-1">🙈 진짜 이름은 쓰지 마세요. 번호와 닉네임만 써요.</p>
           </div>
           <div class="text-left">
-            <label for="student-input-join-code" class="text-xs font-bold text-slate-400 ml-1">🔑 입장 코드</label>
+            <label for="student-input-join-code" class="text-xs font-bold text-slate-500 ml-1">🔑 입장 코드</label>
             <input type="text" id="student-input-join-code" maxlength="20" autocomplete="off" placeholder="칠판에 적힌 코드" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 mt-1">
           </div>
           <p id="student-login-msg" class="text-sm font-semibold text-rose-600 min-h-[1.25rem]"></p>
-          <button onclick="startStudentSurvey()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg">
+          <button onclick="startStudentSurvey()" class="w-full py-3.5 bg-indigo-500 hover:bg-indigo-400 text-slate-900 font-bold rounded-xl">
             시작하기 <i class="fa-solid fa-arrow-right ml-1"></i>
           </button>
         </div>
       </div>
 
       <!-- STEP 2: 설문 문항 -->
-      <div id="student-step-survey" class="hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
+      <div id="student-step-survey" class="hidden bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 flex justify-between items-center">
           <div>
-            <span class="text-xs font-bold text-indigo-600">나에게 맞는 답을 골라요</span>
+            <span class="text-xs font-bold text-slate-500">나에게 맞는 답을 골라요</span>
             <h4 id="survey-student-name" class="font-bold text-slate-800 text-base"></h4>
           </div>
-          <span id="survey-progress-text" class="text-sm font-bold text-indigo-600">1 / 25</span>
+          <span id="survey-progress-text" class="hand text-2xl text-slate-900">1 / 25</span>
         </div>
         <div class="w-full bg-slate-100 h-2">
-          <div id="survey-progress-bar" class="bg-indigo-600 h-2 transition-all duration-300" style="width: 4%;"></div>
+          <div id="survey-progress-bar" class="bg-indigo-500 h-2 rounded-r-full transition-all duration-300" style="width: 4%;"></div>
         </div>
         <div class="p-6 md:p-8 space-y-6">
           <p id="survey-question-text" class="text-lg md:text-xl font-bold text-slate-900 leading-relaxed text-center min-h-[3.5rem]"></p>
@@ -332,38 +376,38 @@
           <div id="survey-answers" class="grid grid-cols-1 gap-2.5 max-w-md mx-auto"></div>
           <div class="max-w-md mx-auto flex justify-between items-center">
             <button id="btn-prev-q" onclick="prevQuestion()" class="px-4 py-2 text-sm font-bold text-slate-500 bg-slate-100 rounded-xl hover:bg-slate-200 disabled:opacity-30"><i class="fa-solid fa-arrow-left mr-1"></i>이전 문항</button>
-            <span class="text-[11px] text-slate-400">정답은 없어요. 솔직하게 골라요.</span>
+            <span class="text-[11px] text-slate-500">정답은 없어요. 솔직하게 골라요.</span>
           </div>
         </div>
       </div>
 
       <!-- STEP 2-1: 모두 같은 답을 골랐을 때 -->
-      <div id="student-step-check" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-5">
-        <div class="text-5xl">🤔</div>
+      <div id="student-step-check" class="hidden bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-5">
+        <div class="step-emoji" aria-hidden="true">🤔</div>
         <h2 class="text-xl font-bold text-slate-900 custom-title">거의 모든 문항에 같은 답을 골랐어요</h2>
         <p class="text-sm text-slate-500 leading-relaxed">이대로면 나에게 무엇이 더 중요한지 알기 어려워요.<br>한 문항씩 천천히 다시 읽고 골라 볼까요?</p>
         <div class="flex flex-col sm:flex-row gap-2 justify-center">
-          <button onclick="redoSurvey()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl">처음부터 다시 하기</button>
+          <button onclick="redoSurvey()" class="px-6 py-3 bg-indigo-500 hover:bg-indigo-400 text-slate-900 text-sm font-bold rounded-xl">처음부터 다시 하기</button>
           <button onclick="keepAnswers()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl">정말 다 같아요</button>
         </div>
       </div>
 
       <!-- STEP 2-2: 1순위가 같을 때 하나 고르기 -->
-      <div id="student-step-tie" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-5">
-        <div class="text-5xl">⚖️</div>
+      <div id="student-step-tie" class="hidden bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-5">
+        <div class="step-emoji" aria-hidden="true">⚖️</div>
         <h2 class="text-xl font-bold text-slate-900 custom-title">마지막 질문이에요!</h2>
         <p class="text-sm text-slate-500">점수가 똑같이 나왔어요. 둘 중 <b>나에게 더 중요한 것</b>을 하나만 골라요.</p>
         <div id="tie-options" class="grid gap-2.5 max-w-md mx-auto text-left"></div>
       </div>
 
       <!-- STEP 3: 결과 -->
-      <div id="student-step-result" class="hidden bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-6">
+      <div id="student-step-result" class="hidden bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-6">
         <div>
-          <div id="student-result-emoji" class="text-5xl mb-2">🧩</div>
+          <div id="student-result-emoji" class="step-emoji mb-2" aria-hidden="true">🧩</div>
           <h2 class="text-2xl font-bold text-slate-900 custom-title">다 했어요!</h2>
-          <p id="student-result-name-text" class="text-sm text-slate-400 mt-1"></p>
+          <p id="student-result-name-text" class="text-sm text-slate-500 mt-1"></p>
         </div>
-        <div class="border border-slate-100 rounded-2xl bg-indigo-50/30 p-6 text-left space-y-4 max-w-md mx-auto">
+        <div class="border border-slate-200 rounded-2xl bg-indigo-50/30 p-6 text-left space-y-4 max-w-md mx-auto">
           <div>
             <span class="text-xs font-bold text-indigo-600">나에게 가장 중요한 것</span>
             <h3 id="student-result-need-title" class="text-xl font-extrabold text-slate-900"></h3>
@@ -371,25 +415,25 @@
           </div>
           <div class="space-y-3.5 pt-3.5 border-t border-indigo-100">
             <div>
-              <span class="text-xs font-extrabold text-slate-400 block">💭 이런 내 모습</span>
+              <span class="text-xs font-extrabold text-slate-500 block">💭 이런 내 모습</span>
               <p id="student-result-need-desc" class="text-sm text-slate-700 leading-relaxed mt-0.5"></p>
             </div>
             <div>
-              <span class="text-xs font-extrabold text-slate-400 block">💪 나의 강점</span>
+              <span class="text-xs font-extrabold text-slate-500 block">💪 나의 강점</span>
               <p id="student-result-strength" class="text-sm font-bold text-slate-800 mt-0.5"></p>
             </div>
             <div>
-              <span class="text-xs font-extrabold text-slate-400 block">🧩 모둠에서 잘 맞는 역할</span>
+              <span class="text-xs font-extrabold text-slate-500 block">🧩 모둠에서 잘 맞는 역할</span>
               <p id="student-result-roles" class="text-sm font-bold text-indigo-700 mt-0.5 leading-relaxed"></p>
             </div>
             <div>
-              <span class="text-xs font-extrabold text-slate-400 block">🌱 친구와 함께할 때 기억해요</span>
+              <span class="text-xs font-extrabold text-slate-500 block">🌱 친구와 함께할 때 기억해요</span>
               <p id="student-result-harmony-tip" class="text-sm text-slate-700 leading-relaxed mt-0.5"></p>
             </div>
           </div>
         </div>
         <p id="student-submit-msg" class="text-sm font-semibold"></p>
-        <button id="btn-retry-submit" onclick="submitToServer()" class="hidden px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl">다시 보내기</button>
+        <button id="btn-retry-submit" onclick="submitToServer()" class="hidden px-6 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-slate-900 text-sm font-bold rounded-xl">다시 보내기</button>
         <button onclick="finishSurveyAndGoHome()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl">처음 화면으로</button>
       </div>
     </div>
@@ -415,9 +459,9 @@
       <p id="pin-msg" class="text-sm font-semibold text-rose-600 min-h-[1.25rem]"></p>
       <div class="flex gap-2">
         <button onclick="closePin()" class="flex-1 py-3 bg-slate-100 text-slate-600 text-sm font-bold rounded-xl">취소</button>
-        <button onclick="submitPin()" class="flex-1 py-3 bg-indigo-600 text-white text-sm font-bold rounded-xl">확인</button>
+        <button onclick="submitPin()" class="flex-1 py-3 bg-indigo-500 text-slate-900 text-sm font-bold rounded-xl">확인</button>
       </div>
-      <p id="pin-forgot" class="text-[11px] text-slate-400 leading-relaxed"></p>
+      <p id="pin-forgot" class="text-[11px] text-slate-500 leading-relaxed"></p>
     </div>
   </div>
 
@@ -711,7 +755,7 @@
       return u.href;
     }
     function qrSvg(text, cell) {
-      if (!window.qrcode) return '<span class="text-xs text-slate-400">QR을 불러오지 못했어요</span>';
+      if (!window.qrcode) return '<span class="text-xs text-slate-500">QR을 불러오지 못했어요</span>';
       const q = qrcode(0, 'M'); q.addData(text); q.make();
       return q.createSvgTag({ cellSize: cell, margin: 2, scalable: true });
     }
@@ -875,11 +919,12 @@
       const values = NEED_KEYS.map((k) => counts[k]);
       if (needsChart) { needsChart.data.datasets[0].data = values; needsChart.update(); return; }
       if (!window.Chart) return;
+      Chart.defaults.font.family = "'Gothic A1', sans-serif"; Chart.defaults.color = '#3d3d66';
       needsChart = new Chart(document.getElementById('needsDoughnutChart'), {
         type: 'doughnut',
         data: {
           labels: NEED_KEYS.map((k) => `${NEEDS_INFO[k].emoji} ${NEEDS_INFO[k].kor}`),
-          datasets: [{ data: values, backgroundColor: ['#64748b', '#f43f5e', '#f59e0b', '#06b6d4', '#8b5cf6'], borderWidth: 2, borderColor: '#ffffff' }]
+          datasets: [{ data: values, backgroundColor: ['#8a8aa3', '#f2709a', '#f5b53d', '#34b8c9', '#9b7bf0'], borderWidth: 2, borderColor: '#ffffff' }]
         },
         options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11, weight: 'bold' } } } } }
       });
@@ -894,18 +939,18 @@
     function renderStudentTable(list) {
       const tbody = document.getElementById('student-table-body');
       if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-12 text-center text-slate-400"><i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>아직 제출한 학생이 없어요.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="px-6 py-12 text-center text-slate-500"><i class="fa-solid fa-folder-open text-3xl mb-2 block"></i>아직 제출한 학생이 없어요.</td></tr>`;
         return;
       }
       tbody.innerHTML = list.map((s) => {
         const d = dominantOf(s), info = NEEDS_INFO[d], g = groupOf(s.id);
         const sub = [s.name !== tagOf(s) && !appState.demo ? tagOf(s) : '', s.time ? s.time + ' 제출' : ''].filter(Boolean).join(' · ');
         return `<tr class="hover:bg-slate-50/50">
-          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(s.id) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${sub ? `<span class="block text-[10px] text-slate-400">${esc(sub)}</span>` : ''}</td>
-          <td class="px-5 py-3 whitespace-nowrap"><span class="px-2.5 py-1.5 rounded-lg text-xs font-bold border ${BADGE[d]}">${info.emoji} ${info.kor}</span> <span class="text-xs text-slate-400">${(() => { const r = rankOf(s); return (s.scoresSum[r[0]] === s.scoresSum[r[1]] ? '2위(동점) ' : '2위 ') + NEEDS_INFO[r[1]].emoji + ' ' + NEEDS_INFO[r[1]].kor; })()}</span></td>
+          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(s.id) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${sub ? `<span class="block text-[10px] text-slate-500">${esc(sub)}</span>` : ''}</td>
+          <td class="px-5 py-3 whitespace-nowrap"><span class="px-2.5 py-1.5 rounded-lg text-xs font-bold border ${BADGE[d]}">${info.emoji} ${info.kor}</span> <span class="text-xs text-slate-500">${(() => { const r = rankOf(s); return (s.scoresSum[r[0]] === s.scoresSum[r[1]] ? '2위(동점) ' : '2위 ') + NEEDS_INFO[r[1]].emoji + ' ' + NEEDS_INFO[r[1]].kor; })()}</span></td>
           ${NEED_KEYS.map((k) => `<td class="px-3 py-3 text-center font-medium ${k === d ? 'text-indigo-700 font-bold' : ''}">${Number(s.scoresSum[k]) || 0}</td>`).join('')}
-          <td class="px-3 py-3 text-center">${g ? `<span class="bg-indigo-600 text-white font-bold px-2 py-1 rounded text-xs">${g}모둠</span>` : '<span class="text-slate-300">-</span>'}</td>
-          <td class="px-3 py-3 text-center">${appState.demo ? '' : `<button class="text-slate-400 hover:text-rose-600" data-del="${esc(s.id)}" aria-label="${esc(s.name)} 결과 지우기"><i class="fa-solid fa-trash-can"></i></button>`}</td>
+          <td class="px-3 py-3 text-center">${g ? `<span class="bg-indigo-500 text-slate-900 font-bold px-2 py-1 rounded text-xs">${g}모둠</span>` : '<span class="text-slate-300">-</span>'}</td>
+          <td class="px-3 py-3 text-center">${appState.demo ? '' : `<button class="text-slate-500 hover:text-rose-600" data-del="${esc(s.id)}" aria-label="${esc(s.name)} 결과 지우기"><i class="fa-solid fa-trash-can"></i></button>`}</td>
         </tr>`;
       }).join('');
     }
@@ -1141,15 +1186,15 @@
         const jobBy = new Map(assignJobs(g, byName, lastGroups.mode).map((a) => [a.id, a.job]));
         const miss = missingJobs(assignJobs(g, byName, lastGroups.mode), lastGroups.mode);
         const mix = NEED_KEYS.filter((k) => doms.includes(k)).map((k) => NEEDS_INFO[k].emoji).join(' ');
-        return `<div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3 break-inside-avoid">
+        return `<div class="bg-white p-5 rounded-2xl border border-slate-200 space-y-3 break-inside-avoid">
           <div class="flex items-center justify-between">
-            <h4 class="font-bold text-slate-950 text-base"><i class="fa-solid fa-puzzle-piece text-indigo-500 mr-1.5"></i>${gi + 1}모둠</h4>
-            <span class="text-xs font-semibold text-slate-400">${g.length}명 · ${mix}</span>
+            <h4 class="font-bold text-slate-950 text-base">${gi + 1}모둠</h4>
+            <span class="text-xs font-semibold text-slate-500">${g.length}명 · ${mix}</span>
           </div>
           ${miss.length ? `<p class="text-[11px] text-slate-500">함께 나눠 맡을 일: ${miss.map((m) => m.emoji + ' ' + m.title).join(', ')}</p>` : ''}
           ${g.map((n) => {
             const d = dominantOf(byName.get(n)), info = NEEDS_INFO[d];
-            return `<button type="button" data-member="${esc(n)}" class="member w-full text-left p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5 hover:border-indigo-300 ${pickedMember === n ? 'picked' : ''}">
+            return `<button type="button" data-member="${esc(n)}" class="member w-full text-left p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-start gap-2.5 hover:border-indigo-300 ${pickedMember === n ? 'picked' : ''}">
               <span class="text-2xl mt-0.5">${info.emoji}</span>
               <span class="flex-1 min-w-0">
                 <span class="flex items-center justify-between gap-2"><span class="font-bold text-slate-900">${esc(byName.get(n).name)}</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${BADGE[d]}">${info.kor}</span></span>
@@ -1391,7 +1436,7 @@
       const rk = rankOf(rec), info = NEEDS_INFO[rk[0]];
       document.getElementById('student-result-name-text').textContent = `${tagOf(rec)}의 결과예요.`;
       document.getElementById('student-result-emoji').textContent = info.emoji;
-      document.getElementById('student-result-need-title').textContent = `${info.emoji} ${info.kor}`;
+      document.getElementById('student-result-need-title').textContent = info.kor;
       document.getElementById('student-result-second').textContent = `그다음은 ${NEEDS_INFO[rk[1]].emoji} ${NEEDS_INFO[rk[1]].kor}${sums[rk[0]] === sums[rk[1]] ? ' (점수가 같았어요)' : ''}`;
       document.getElementById('student-result-need-desc').textContent = info.needDesc;
       document.getElementById('student-result-strength').textContent = JOBS.balance[rk[0]].strength;
