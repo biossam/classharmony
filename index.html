@@ -161,8 +161,10 @@
       <!-- 우리 반 명단 -->
       <section id="roster-panel" class="hidden no-print bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-3">
         <h3 class="text-base font-bold text-slate-900"><i class="fa-solid fa-list-ul mr-2 text-indigo-500"></i>우리 반 명단</h3>
-        <p class="text-xs text-slate-500 leading-relaxed">한 줄에 한 명씩, 또는 쉼표로 나눠 넣어요. 넣으면 <b>아직 안 한 학생</b>과 <b>명단에 없는 이름</b>(잘못 친 이름, 다른 반 학생)이 보여요. 명단은 이 기기에만 저장돼요.</p>
-        <textarea id="input-roster" rows="5" placeholder="김도윤&#10;이서연&#10;박민준" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
+        <p class="text-xs text-slate-500 leading-relaxed">학생은 <b>번호와 닉네임</b>으로만 설문해요. 여기에 번호와 이름을 넣으면 <b>선생님 화면과 인쇄물에서만</b> 실명으로 보이고, <b>아직 안 한 번호</b>와 <b>명단에 없는 번호</b>도 알려 줘요.<br>
+          한 줄에 한 명씩 <b>"번호 이름"</b>(예: 7 김도윤)으로 넣거나, 이름만 1번부터 차례대로 넣어도 돼요.</p>
+        <p class="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2 leading-relaxed">🔒 실명 명단은 <b>이 기기(이 브라우저)에만</b> 저장돼요. 구글 시트나 학생 기기로는 보내지 않아요. 다른 기기에서 쓰려면 그 기기에서 명단을 다시 넣어 주세요.</p>
+        <textarea id="input-roster" rows="5" placeholder="1 김도윤&#10;2 이서연&#10;3 박민준" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></textarea>
         <div class="flex flex-wrap gap-2">
           <button onclick="saveRoster()" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700">명단 저장</button>
           <button onclick="clearRoster()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-100">명단 지우기</button>
@@ -177,7 +179,7 @@
           <div id="missing-names" class="flex flex-wrap gap-1.5"></div>
         </div>
         <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
-          <p class="text-xs font-bold text-rose-800 mb-2">❓ 명단에 없는 이름 <span class="font-medium">(잘못 쳤으면 지우고 다시 하게 해 주세요)</span></p>
+          <p class="text-xs font-bold text-rose-800 mb-2">❓ 명단에 없는 번호 <span class="font-medium">(번호를 잘못 넣었으면 지우고 다시 하게 해 주세요)</span></p>
           <div id="unknown-names" class="flex flex-wrap gap-1.5"></div>
         </div>
       </div>
@@ -215,7 +217,7 @@
               </select>
             </label>
             <label class="block text-xs font-semibold text-slate-500">③ 같은 모둠이 되면 안 되는 학생 (선택)
-              <textarea id="input-avoid" rows="2" placeholder="한 줄에 한 쌍: 김도윤-이서연" class="mt-1.5 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="saveAvoid()"></textarea>
+              <textarea id="input-avoid" rows="2" placeholder="한 줄에 한 쌍, 번호나 이름: 3-12" class="mt-1.5 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm" onchange="saveAvoid()"></textarea>
             </label>
           </div>
           <button onclick="runHarmoniousMatching()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
@@ -257,7 +259,7 @@
           <table class="w-full text-left border-collapse">
             <thead>
               <tr class="bg-slate-50 text-slate-400 text-xs font-bold border-b border-slate-100">
-                <th class="px-5 py-4">이름</th>
+                <th class="px-5 py-4">학생</th>
                 <th class="px-5 py-4">1·2순위 욕구</th>
                 <th class="px-3 py-4 text-center">생존</th>
                 <th class="px-3 py-4 text-center">사랑/소속</th>
@@ -289,12 +291,17 @@
         </div>
         <div class="space-y-2">
           <h2 class="text-2xl font-bold text-slate-900 custom-title">나의 마음 욕구 알아보기</h2>
-          <p class="text-sm text-slate-400">이름과 선생님이 알려 준 입장 코드를 입력하세요.</p>
+          <p class="text-sm text-slate-400">내 번호와 선생님이 알려 준 입장 코드를 넣어요.</p>
         </div>
         <div class="max-w-xs mx-auto space-y-4">
           <div class="text-left">
-            <label for="student-input-name" class="text-xs font-bold text-slate-400 ml-1">이름</label>
-            <input type="text" id="student-input-name" maxlength="20" autocomplete="off" placeholder="예: 홍길동" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 mt-1">
+            <label for="student-input-no" class="text-xs font-bold text-slate-400 ml-1">내 번호</label>
+            <input type="number" id="student-input-no" min="1" max="40" inputmode="numeric" autocomplete="off" placeholder="예: 7" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 mt-1">
+          </div>
+          <div class="text-left">
+            <label for="student-input-nick" class="text-xs font-bold text-slate-400 ml-1">닉네임 <span class="font-medium">(안 써도 돼요)</span></label>
+            <input type="text" id="student-input-nick" maxlength="8" autocomplete="off" placeholder="예: 별사탕" class="w-full px-4 py-3 border border-slate-200 rounded-xl text-center font-bold text-lg focus:outline-none focus:border-indigo-500 mt-1">
+            <p class="text-[11px] text-slate-400 mt-1 ml-1">🙈 진짜 이름은 쓰지 마세요. 번호와 닉네임만 써요.</p>
           </div>
           <div class="text-left">
             <label for="student-input-join-code" class="text-xs font-bold text-slate-400 ml-1">🔑 입장 코드</label>
@@ -600,18 +607,26 @@
       if (!old || store.get('ch_migrated', false)) return;
       const presetNames = new Set(PRESET_STUDENTS.map((s) => s.name));
       const real = (old.students || []).filter((s) => !presetNames.has(s.name));
-      if (real.length) appState.local = real.map((s) => ({ name: s.name, scoresSum: s.scoresSum }));
+      if (real.length) store.set('ch_backup_names', real.map((s) => ({ name: s.name, scoresSum: s.scoresSum })));
       if (old.settings?.totalStudents) appState.settings.totalStudents = old.settings.totalStudents;
       if (old.settings?.joinCode) appState.settings.joinCode = old.settings.joinCode;
       store.set('ch_migrated', true);
     })();
     appState.local ??= [];
     appState.settings.joinCode ??= '1234';
+    // 실명 대신 번호로 바꾼 버전: 번호 없는 예전 기록(이름)은 목록에서 빼고 이 기기에 따로 보관
+    if (appState.local.some((s) => !s.no)) {
+      store.set('ch_backup_names', (store.get('ch_backup_names', []) || []).concat(appState.local.filter((s) => !s.no)));
+      appState.local = appState.local.filter((s) => s.no);
+      store.del('ch_groups');
+    }
+    // 예전 명단(이름만) → 1번부터 차례로 번호를 붙임
+    if ((appState.settings.roster || []).some((r) => typeof r === 'string')) appState.settings.roster = appState.settings.roster.map((n, i) => (typeof n === 'string' ? { no: i + 1, name: n } : n));
     let serverStudents = [];
     let serverJoinCode = '';
     let lastGroups = store.get('ch_groups', null);
     let pickedMember = null;
-    let currentSurveyState = { studentName: '', joinCode: '', currentQuestionIndex: 0, answers: {}, result: null };
+    let currentSurveyState = { no: 0, nick: '', joinCode: '', currentQuestionIndex: 0, answers: {}, result: null };
     let needsChart = null;
     let localStudentMode = false;
     let renderedRoster = null;
@@ -619,10 +634,16 @@
     const connected = () => Boolean(api);
     function save() { store.set('class_harmony_state_v3', appState); }
     // 화면에 보여 줄 학생 목록: 예시 → 예시, 연결 → 시트, 아니면 이 기기
+    // 학생마다 id(번호)로 찾고, name은 화면에 보여 줄 이름: 선생님 명단에 있으면 실명, 없으면 "7번 닉네임"
     function students() {
-      if (appState.demo) return PRESET_STUDENTS.map((s) => ({ name: s.name, scoresSum: s.scoresSum }));
-      return connected() ? serverStudents : appState.local;
+      if (appState.demo) return PRESET_STUDENTS.map((s, i) => ({ id: String(i + 1), no: i + 1, nick: '', name: s.name, scoresSum: s.scoresSum }));
+      const rm = new Map(roster().map((r) => [String(r.no), r.name]));
+      return (connected() ? serverStudents : appState.local).map((s) => {
+        const id = String(s.no);
+        return { ...s, id, name: rm.get(id) || tagOf(s) };
+      });
     }
+    const tagOf = (s) => `${s.no}번${s.nick ? ' ' + s.nick : ''}`;
 
     // ── 서버 ──
     async function call(body) {
@@ -721,26 +742,32 @@
     }
     function saveAvoid() { store.set('ch_avoid', document.getElementById('input-avoid').value); }
 
-    // ── 우리 반 명단 ──
-    // 이름 비교는 띄어쓰기를 빼고 함 ("홍 길동" = "홍길동")
-    const nkey = (n) => String(n || '').replace(/\s+/g, '');
+    // ── 우리 반 명단 (번호 → 실명, 이 기기에만) ──
     function roster() { return appState.settings.roster || []; }
     function toggleRoster() {
       const p = document.getElementById('roster-panel');
       p.classList.toggle('hidden');
-      document.getElementById('input-roster').value = roster().join('\n');
+      document.getElementById('input-roster').value = roster().map((r) => `${r.no} ${r.name}`).join('\n');
       document.getElementById('roster-msg').textContent = '';
     }
+    // "7 김도윤", "7번 김도윤", "7. 김도윤" 또는 이름만(차례대로 번호)
     function saveRoster() {
-      const seen = new Set();
-      const names = document.getElementById('input-roster').value.split(/[\n,]/).map((x) => x.replace(/\s+/g, ' ').trim().slice(0, 20))
-        .filter((x) => x && !seen.has(nkey(x)) && seen.add(nkey(x)));
-      if (names.length > 40) { alert('명단은 40명까지 넣을 수 있어요.'); return; }
-      appState.settings.roster = names;
-      if (names.length) appState.settings.totalStudents = names.length;
+      const lines = document.getElementById('input-roster').value.split(/\n|,/).map((x) => x.replace(/\s+/g, ' ').trim()).filter(Boolean);
+      const out = new Map(); let next = 1; const bad = [];
+      lines.forEach((line) => {
+        const m = line.match(/^(\d{1,2})\s*(?:번|\.|\))?\s*(.*)$/);
+        const no = m ? Number(m[1]) : next;
+        const name = (m ? m[2] : line).slice(0, 20);
+        if (!(no >= 1 && no <= 40) || !name) { bad.push(line); return; }
+        out.set(no, name); next = no + 1;
+      });
+      if (bad.length) { alert('이 줄은 알아볼 수 없어요(번호 1~40과 이름):\n' + bad.join('\n')); return; }
+      const list = [...out.entries()].sort((x, y) => x[0] - y[0]).map(([no, name]) => ({ no, name }));
+      appState.settings.roster = list;
+      if (list.length) appState.settings.totalStudents = list.length;
       save();
-      document.getElementById('input-roster').value = names.join('\n');
-      document.getElementById('roster-msg').textContent = names.length ? `${names.length}명을 저장했어요.` : '명단을 비웠어요.';
+      document.getElementById('input-roster').value = list.map((r) => `${r.no} ${r.name}`).join('\n');
+      document.getElementById('roster-msg').textContent = list.length ? `${list.length}명을 저장했어요.` : '명단을 비웠어요.';
       renderAll();
     }
     function clearRoster() {
@@ -753,8 +780,8 @@
     function rosterStatus(list) {
       const r = roster();
       if (!r.length) return null;
-      const done = new Set(list.map((s) => nkey(s.name))), inRoster = new Set(r.map(nkey));
-      return { missing: r.filter((n) => !done.has(nkey(n))), unknown: list.filter((s) => !inRoster.has(nkey(s.name))).map((s) => s.name), inRoster };
+      const done = new Set(list.map((s) => s.id)), inRoster = new Set(r.map((x) => String(x.no)));
+      return { missing: r.filter((x) => !done.has(String(x.no))).map((x) => `${x.no} ${x.name}`), unknown: list.filter((s) => !inRoster.has(s.id)).map((s) => s.name), inRoster };
     }
 
     // ── 예시·초기화·삭제 ──
@@ -781,13 +808,14 @@
       lastGroups = null; store.del('ch_groups');
       renderAll();
     }
-    async function removeStudent(name) {
-      if (!confirm(`${name} 학생의 설문 결과를 지울까요?`)) return;
+    async function removeStudent(id) {
+      const st = students().find((s) => s.id === id);
+      if (!confirm(`${st ? st.name : id + '번'} 학생의 설문 결과를 지울까요?`)) return;
       if (connected()) {
-        try { const out = await call({ action: 'delete', key: teacherKey, name }); serverStudents = out.students || []; }
+        try { const out = await call({ action: 'delete', key: teacherKey, no: Number(id) }); serverStudents = out.students || []; }
         catch (e) { alert(e.message); return; }
       } else {
-        appState.local = appState.local.filter((s) => s.name !== name); save();
+        appState.local = appState.local.filter((s) => String(s.no) !== id); save();
       }
       renderAll();
     }
@@ -870,13 +898,14 @@
         return;
       }
       tbody.innerHTML = list.map((s) => {
-        const d = dominantOf(s), info = NEEDS_INFO[d], g = groupOf(s.name);
+        const d = dominantOf(s), info = NEEDS_INFO[d], g = groupOf(s.id);
+        const sub = [s.name !== tagOf(s) && !appState.demo ? tagOf(s) : '', s.time ? s.time + ' 제출' : ''].filter(Boolean).join(' · ');
         return `<tr class="hover:bg-slate-50/50">
-          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(nkey(s.name)) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${s.time ? `<span class="block text-[10px] text-slate-400">${esc(s.time)} 제출</span>` : ''}</td>
+          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(s.id) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${sub ? `<span class="block text-[10px] text-slate-400">${esc(sub)}</span>` : ''}</td>
           <td class="px-5 py-3 whitespace-nowrap"><span class="px-2.5 py-1.5 rounded-lg text-xs font-bold border ${BADGE[d]}">${info.emoji} ${info.kor}</span> <span class="text-xs text-slate-400">${(() => { const r = rankOf(s); return (s.scoresSum[r[0]] === s.scoresSum[r[1]] ? '2위(동점) ' : '2위 ') + NEEDS_INFO[r[1]].emoji + ' ' + NEEDS_INFO[r[1]].kor; })()}</span></td>
           ${NEED_KEYS.map((k) => `<td class="px-3 py-3 text-center font-medium ${k === d ? 'text-indigo-700 font-bold' : ''}">${Number(s.scoresSum[k]) || 0}</td>`).join('')}
           <td class="px-3 py-3 text-center">${g ? `<span class="bg-indigo-600 text-white font-bold px-2 py-1 rounded text-xs">${g}모둠</span>` : '<span class="text-slate-300">-</span>'}</td>
-          <td class="px-3 py-3 text-center">${appState.demo ? '' : `<button class="text-slate-400 hover:text-rose-600" data-del="${esc(s.name)}" aria-label="${esc(s.name)} 결과 지우기"><i class="fa-solid fa-trash-can"></i></button>`}</td>
+          <td class="px-3 py-3 text-center">${appState.demo ? '' : `<button class="text-slate-400 hover:text-rose-600" data-del="${esc(s.id)}" aria-label="${esc(s.name)} 결과 지우기"><i class="fa-solid fa-trash-can"></i></button>`}</td>
         </tr>`;
       }).join('');
     }
@@ -886,10 +915,13 @@
     });
 
     // ── 모둠 배치 알고리즘 ──
-    function parseAvoid(names) {
-      const set = new Set(names);
-      return (document.getElementById('input-avoid').value || '').split(/\n|,/).map((line) => line.split(/[-~/·]/).map((x) => x.trim()).filter(Boolean))
-        .filter((p) => p.length === 2 && set.has(p[0]) && set.has(p[1]) && p[0] !== p[1]);
+    // 같은 모둠이 되면 안 되는 쌍: "3-12" 처럼 번호로, 또는 화면에 보이는 이름으로. id 쌍으로 돌려줌
+    function parseAvoid(list) {
+      const ids = new Set(list.map((s) => s.id));
+      const byLabel = new Map(list.map((s) => [s.name.replace(/\s+/g, ''), s.id]));
+      const toId = (t) => { const n = t.replace(/번$/, ''); return /^\d+$/.test(n) ? (ids.has(String(Number(n))) ? String(Number(n)) : null) : byLabel.get(t.replace(/\s+/g, '')) || null; };
+      return (document.getElementById('input-avoid').value || '').split(/\n|,/).map((line) => line.split(/[-~/·]/).map((x) => x.trim()).filter(Boolean).map(toId))
+        .filter((p) => p.length === 2 && p[0] && p[1] && p[0] !== p[1]);
     }
 
     // 모둠 배치의 '나쁨' 점수 (낮을수록 좋음)
@@ -933,16 +965,16 @@
       return cost;
     }
 
-    function makeGroups(list, size, mode, avoidNames) {
+    function makeGroups(list, size, mode, avoidIds) {
       const N = list.length;
       const G = Math.max(1, Math.round(N / size));
       // 학생별 대표 욕구와 표준화 점수(개인 평균을 뺀 값: 상대적으로 무엇이 더 중요한지)
       const st = list.map((s) => {
         const v = NEED_KEYS.map((k) => Number(s.scoresSum[k]) || 0), m = v.reduce((a, b) => a + b, 0) / 5;
-        return { name: s.name, dom: dominantOf(s), z: v.map((x) => x - m) };
+        return { id: s.id, dom: dominantOf(s), z: v.map((x) => x - m) };
       });
-      const idx = new Map(st.map((s, i) => [s.name, i]));
-      const avoid = avoidNames.map(([a, b]) => [idx.get(a), idx.get(b)]);
+      const idx = new Map(st.map((s, i) => [s.id, i]));
+      const avoid = avoidIds.map(([a, b]) => [idx.get(a), idx.get(b)]);
       let best = null, bestCost = Infinity;
       for (let r = 0; r < 14; r++) {
         const order = st.map((_, i) => i).sort(() => Math.random() - 0.5);
@@ -959,7 +991,7 @@
         if (cost < bestCost - 1e-9 || (Math.abs(cost - bestCost) < 1e-9 && Math.random() < 0.5)) { bestCost = cost; best = assign.slice(); }
       }
       const groups = Array.from({ length: G }, () => []);
-      best.forEach((g, i) => groups[g].push(st[i].name));
+      best.forEach((g, i) => groups[g].push(st[i].id));
       groups.forEach((g) => g.sort((a, b) => NEED_KEYS.indexOf(st[idx.get(a)].dom) - NEED_KEYS.indexOf(st[idx.get(b)].dom)));
       return groups;
     }
@@ -1005,7 +1037,7 @@
     // 모둠 안에서 역할 나누기: 대표 욕구의 일을 먼저 맡고, 겹치면 다음으로 높은 욕구의 일을 맡음
     function assignJobs(names, byName, mode) {
       const jobs = JOBS[mode];
-      if (!jobs) return names.map((n) => ({ name: n, need: dominantOf(byName.get(n)), job: null }));
+      if (!jobs) return names.map((n) => ({ id: n, name: byName.get(n).name, need: dominantOf(byName.get(n)), job: null }));
       const zOf = (n) => { const s = byName.get(n).scoresSum, v = NEED_KEYS.map((k) => Number(s[k]) || 0), m = v.reduce((a, b) => a + b, 0) / 5; return Object.fromEntries(NEED_KEYS.map((k, i) => [k, v[i] - m])); };
       const people = names.map((n) => ({ name: n, z: zOf(n), dom: dominantOf(byName.get(n)) }));
       const free = new Set(NEED_KEYS);
@@ -1021,7 +1053,7 @@
       let extra = 0;
       return names.map((n) => {
         const k = out.get(n);
-        return { name: n, need: dominantOf(byName.get(n)), jobNeed: k, job: k ? jobs[k] : (extra++ % 2 ? EXTRA_JOB2 : EXTRA_JOB) };
+        return { id: n, name: byName.get(n).name, need: dominantOf(byName.get(n)), jobNeed: k, job: k ? jobs[k] : (extra++ % 2 ? EXTRA_JOB2 : EXTRA_JOB) };
       });
     }
     // 아무도 맡지 않은 일(3~4명 모둠) → 함께 나눠 맡기
@@ -1058,7 +1090,7 @@
 
     function printCards() {
       if (!lastGroups) return;
-      const byName = new Map(students().map((s) => [s.name, s]));
+      const byName = new Map(students().map((s) => [s.id, s]));
       const mode = lastGroups.mode;
       document.getElementById('cards-print').innerHTML = lastGroups.groups.map((g, gi) => {
         const as = assignJobs(g, byName, mode), miss = missingJobs(as, mode);
@@ -1071,7 +1103,7 @@
       setTimeout(done, 1500);
     }
     function showCards(gi) {
-      const byName = new Map(students().map((s) => [s.name, s]));
+      const byName = new Map(students().map((s) => [s.id, s]));
       const g = lastGroups.groups[gi], mode = lastGroups.mode;
       const as = assignJobs(g, byName, mode), miss = missingJobs(as, mode);
       document.getElementById('cards-modal-body').innerHTML = as.map((a) => cardHtml(gi, a, mode, miss)).join('');
@@ -1084,7 +1116,7 @@
       const mode = document.querySelector('input[name="group-mode"]:checked')?.value || 'balance';
       const size = parseInt(document.getElementById('select-group-size').value, 10);
       store.set('ch_mode', mode);
-      lastGroups = { mode, groups: makeGroups(list, size, mode, parseAvoid(list.map((s) => s.name))) };
+      lastGroups = { mode, groups: makeGroups(list, size, mode, parseAvoid(list)) };
       pickedMember = null;
       store.set('ch_groups', lastGroups);
       renderAll();
@@ -1092,21 +1124,21 @@
     }
 
     function renderGroupResults() {
-      const byName = new Map(students().map((s) => [s.name, s]));
+      const byName = new Map(students().map((s) => [s.id, s]));
       // 학생 목록이 바뀌었으면(삭제 등) 없는 이름은 빼고 보여 줌
       const groups = lastGroups.groups.map((g) => g.filter((n) => byName.has(n))).filter((g) => g.length);
       if (!groups.length) { document.getElementById('matching-result-section').classList.add('hidden'); return; }
       const m = MODES[lastGroups.mode] || MODES.balance;
       document.getElementById('result-title').textContent = `${m.title} 모둠 배치 결과`;
       document.getElementById('result-tip').textContent = '운영 팁: ' + m.tip;
-      const avoid = parseAvoid([...byName.keys()]);
+      const avoid = parseAvoid([...byName.values()]);
       const clash = avoid.filter(([a, b]) => groups.some((g) => g.includes(a) && g.includes(b)));
       const warn = document.getElementById('group-warn');
       warn.classList.toggle('hidden', !clash.length);
-      warn.textContent = clash.length ? '같은 모둠이 되면 안 되는 학생이 함께 있어요: ' + clash.map((p) => p.join('·')).join(', ') + ' (이름을 눌러 바꿔 주세요)' : '';
+      warn.textContent = clash.length ? '같은 모둠이 되면 안 되는 학생이 함께 있어요: ' + clash.map((p) => p.map((i) => byName.get(i).name).join('·')).join(', ') + ' (이름을 눌러 바꿔 주세요)' : '';
       document.getElementById('groups-container').innerHTML = groups.map((g, gi) => {
         const doms = g.map((n) => dominantOf(byName.get(n)));
-        const jobBy = new Map(assignJobs(g, byName, lastGroups.mode).map((a) => [a.name, a.job]));
+        const jobBy = new Map(assignJobs(g, byName, lastGroups.mode).map((a) => [a.id, a.job]));
         const miss = missingJobs(assignJobs(g, byName, lastGroups.mode), lastGroups.mode);
         const mix = NEED_KEYS.filter((k) => doms.includes(k)).map((k) => NEEDS_INFO[k].emoji).join(' ');
         return `<div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-3 break-inside-avoid">
@@ -1120,7 +1152,7 @@
             return `<button type="button" data-member="${esc(n)}" class="member w-full text-left p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-start gap-2.5 hover:border-indigo-300 ${pickedMember === n ? 'picked' : ''}">
               <span class="text-2xl mt-0.5">${info.emoji}</span>
               <span class="flex-1 min-w-0">
-                <span class="flex items-center justify-between gap-2"><span class="font-bold text-slate-900">${esc(n)}</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${BADGE[d]}">${info.kor}</span></span>
+                <span class="flex items-center justify-between gap-2"><span class="font-bold text-slate-900">${esc(byName.get(n).name)}</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ${BADGE[d]}">${info.kor}</span></span>
                 <span class="block text-[11px] font-bold text-indigo-700 leading-tight mt-0.5">${jobBy.get(n) ? `역할: ${jobBy.get(n).emoji} ${jobBy.get(n).title}` : '이야기 카드'}</span>
               </span>
             </button>`;
@@ -1148,7 +1180,8 @@
       renderAll();
     });
     function copyGroups() {
-      const t = lastGroups.groups.map((g, i) => `${i + 1}모둠: ${g.join(', ')}`).join('\n');
+      const byId = new Map(students().map((s) => [s.id, s]));
+      const t = lastGroups.groups.map((g, i) => `${i + 1}모둠: ${g.map((id) => byId.get(id)?.name || id + '번').join(', ')}`).join('\n');
       (navigator.clipboard?.writeText(t) || Promise.reject()).then(() => alert('모둠 명단을 복사했어요.'), () => prompt('복사하세요.', t));
     }
 
@@ -1242,16 +1275,21 @@
 
     // ── 학생 설문 ──
     function resetStudentSurveyFlow() {
-      document.getElementById('student-input-name').value = '';
+      document.getElementById('student-input-no').value = '';
+      document.getElementById('student-input-nick').value = '';
       document.getElementById('student-input-join-code').value = '';
       document.getElementById('student-login-msg').textContent = '';
       showStep('student-step-login');
     }
+    // 닉네임: 8자까지, 띄어쓰기 하나로, 화면을 깨는 기호는 뺌
+    const cleanNick = (t) => String(t || '').replace(/[<>"'`=]/g, '').replace(/\s+/g, ' ').trim().slice(0, 8);
     async function startStudentSurvey() {
-      const name = document.getElementById('student-input-name').value.replace(/\s+/g, ' ').trim().slice(0, 20);
+      const noText = document.getElementById('student-input-no').value.trim();
+      const no = Number(noText);
+      const nick = cleanNick(document.getElementById('student-input-nick').value);
       const code = document.getElementById('student-input-join-code').value.trim();
       const msg = document.getElementById('student-login-msg');
-      if (!name) { msg.textContent = '이름을 입력해 주세요.'; return; }
+      if (!(Number.isInteger(no) && no >= 1 && no <= 40)) { msg.textContent = '내 번호를 1~40 사이로 넣어 주세요.'; return; }
       if (!code) { msg.textContent = '입장 코드를 입력해 주세요.'; return; }
       // 연결 모드: 시트에 코드를 물어봄 / 이 기기 모드: 바로 확인
       if (connected()) {
@@ -1260,7 +1298,7 @@
         catch (e) { msg.textContent = e.message === 'Failed to fetch' ? '인터넷 연결을 확인해 주세요.' : e.message; return; }
         msg.textContent = '';
       } else if (code.toLowerCase() !== String(appState.settings.joinCode).toLowerCase()) { msg.textContent = '입장 코드가 맞지 않아요.'; return; }
-      currentSurveyState = { studentName: name, joinCode: code, currentQuestionIndex: 0, answers: {}, result: null, keep: false };
+      currentSurveyState = { no, nick, joinCode: code, currentQuestionIndex: 0, answers: {}, result: null, keep: false };
       showStep('student-step-survey');
       renderSurveyQuestion();
     }
@@ -1275,7 +1313,7 @@
     function renderSurveyQuestion() {
       const i = currentSurveyState.currentQuestionIndex;
       const picked = currentSurveyState.answers[SURVEY[i].id];
-      document.getElementById('survey-student-name').textContent = currentSurveyState.studentName;
+      document.getElementById('survey-student-name').textContent = tagOf(currentSurveyState);
       document.getElementById('survey-progress-text').textContent = `${i + 1} / ${SURVEY.length}`;
       document.getElementById('survey-progress-bar').style.width = `${((i + 1) / SURVEY.length) * 100}%`;
       document.getElementById('survey-question-text').textContent = SURVEY[i].text;
@@ -1348,10 +1386,10 @@
     function submitStudentSurvey(top) {
       const sums = sumsOf(currentSurveyState.answers);
       const now = new Date();
-      const rec = { name: currentSurveyState.studentName, scoresSum: sums, top, time: `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` };
+      const rec = { no: currentSurveyState.no, nick: currentSurveyState.nick, scoresSum: sums, top, time: `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}` };
       currentSurveyState.result = rec;
       const rk = rankOf(rec), info = NEEDS_INFO[rk[0]];
-      document.getElementById('student-result-name-text').textContent = `${rec.name}의 결과예요.`;
+      document.getElementById('student-result-name-text').textContent = `${tagOf(rec)}의 결과예요.`;
       document.getElementById('student-result-emoji').textContent = info.emoji;
       document.getElementById('student-result-need-title').textContent = `${info.emoji} ${info.kor}`;
       document.getElementById('student-result-second').textContent = `그다음은 ${NEEDS_INFO[rk[1]].emoji} ${NEEDS_INFO[rk[1]].kor}${sums[rk[0]] === sums[rk[1]] ? ' (점수가 같았어요)' : ''}`;
@@ -1362,7 +1400,7 @@
       showStep('student-step-result');
       if (connected()) submitToServer();
       else {
-        const at = appState.local.findIndex((s) => s.name === rec.name);
+        const at = appState.local.findIndex((s) => s.no === rec.no);
         if (at >= 0) appState.local[at] = rec; else appState.local.push(rec);
         save();
         setSubmitMsg('선생님께 결과가 저장됐어요. 다음 친구에게 넘겨 주세요.', false);
@@ -1376,7 +1414,7 @@
     async function submitToServer() {
       setSubmitMsg('선생님께 보내는 중…', false);
       try {
-        await call({ action: 'submit', code: currentSurveyState.joinCode, name: currentSurveyState.result.name, scores: currentSurveyState.result.scoresSum, top: currentSurveyState.result.top });
+        await call({ action: 'submit', code: currentSurveyState.joinCode, no: currentSurveyState.result.no, nick: currentSurveyState.result.nick, scores: currentSurveyState.result.scoresSum, top: currentSurveyState.result.top });
         setSubmitMsg('✔ 선생님께 잘 보냈어요!', false);
       } catch (e) {
         setSubmitMsg((e.message === 'Failed to fetch' ? '인터넷 연결을 확인해 주세요.' : e.message), true);

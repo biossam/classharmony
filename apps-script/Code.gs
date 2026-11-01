@@ -2,6 +2,7 @@
  * 클래스 하모니 · 학생 욕구 설문 저장소 (Google Apps Script, 무료)
  * 학생이 자기 기기에서 제출한 설문 결과를 선생님 구글 시트에 모읍니다.
  * 선생님 화면은 '선생님 코드'를 알아야만 결과를 볼 수 있어요.
+ * 학생 실명은 받지 않아요. 번호와 닉네임(선택)만 저장해요.
  *
  * 설치 방법은 apps-script/설치방법.md 를 보세요.
  * 선생님 코드(TEACHER_KEY)와 학생 입장 코드(JOIN_CODE)는 이 파일에 적지 말고
@@ -9,7 +10,8 @@
  */
 
 const SHEET_NAME = '설문';
-const HEAD = ['제출 시각', '이름', '생존', '사랑/소속', '힘/성취', '자유', '즐거움', '대표 욕구'];
+const HEAD = ['제출 시각', '번호', '닉네임', '생존', '사랑/소속', '힘/성취', '자유', '즐거움', '대표 욕구'];
+const COLS = HEAD.length;
 const NEEDS = ['survival', 'love', 'power', 'freedom', 'fun'];
 const NEED_KOR = { survival: '생존', love: '사랑/소속', power: '힘/성취', freedom: '자유', fun: '즐거움' };
 const MAX_POSTS_PER_10MIN = 200;
@@ -31,6 +33,11 @@ function book_() {
 function sheet_() {
   const ss = book_();
   let sh = ss.getSheetByName(SHEET_NAME);
+  // 예전 버전(이름으로 저장) 시트는 보관 시트로 옮겨 두고 새로 만듦
+  if (sh && sh.getLastRow() >= 1 && String(sh.getRange(1, 2).getValue()) !== '번호') {
+    sh.setName('보관_이름버전_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMdd_HHmm'));
+    sh = null;
+  }
   if (!sh) {
     sh = ss.insertSheet(SHEET_NAME, 0);
     sh.appendRow(HEAD);
@@ -45,7 +52,8 @@ function json_(obj) {
 
 // 시트에 글을 넣을 때 = + - @ 로 시작하면 수식으로 실행되지 않게 앞에 ' 를 붙임
 function safe_(v) { const t = String(v == null ? '' : v); return /^[=+\-@\t\r]/.test(t) ? "'" + t : t; }
-function name_(v) { return String(v || '').replace(/\s+/g, ' ').trim().slice(0, 20); }
+function nick_(v) { return String(v || '').replace(/[<>"'`=]/g, '').replace(/\s+/g, ' ').trim().slice(0, 8); }
+function no_(v) { const n = Number(v); return Number.isInteger(n) && n >= 1 && n <= 40 ? n : 0; }
 
 function tooMany_() {
   const c = CacheService.getScriptCache();
@@ -63,14 +71,14 @@ function isTeacher_(d) {
 function rows_() {
   const sh = sheet_();
   const last = sh.getLastRow();
-  return last < 2 ? [] : sh.getRange(2, 1, last - 1, 8).getValues();
+  return last < 2 ? [] : sh.getRange(2, 1, last - 1, COLS).getValues();
 }
 
-// 학생 설문 제출: 같은 이름이면 새 결과로 바꿈
+// 학생 설문 제출: 같은 번호면 새 결과로 바꿈
 function submit_(d) {
   if (String(d.code || '').trim().toLowerCase() !== joinCode_().toLowerCase()) return json_({ ok: false, error: '입장 코드가 맞지 않아요. 선생님께 다시 물어보세요.' });
-  const name = name_(d.name);
-  if (!name) return json_({ ok: false, error: '이름을 입력해 주세요.' });
+  const no = no_(d.no);
+  if (!no) return json_({ ok: false, error: '번호를 1~40 사이로 넣어 주세요.' });
   const s = d.scores || {};
   const vals = NEEDS.map((k) => Number(s[k]));
   if (vals.some((v) => !(v >= 5 && v <= 25) || Math.round(v) !== v)) return json_({ ok: false, error: '설문 점수가 올바르지 않아요.' });
@@ -81,27 +89,27 @@ function submit_(d) {
   if (top >= 0 && vals[top] === max) dom = top;
   const sh = sheet_();
   const rows = rows_();
-  const row = [new Date(), safe_(name)].concat(vals, [NEED_KOR[NEEDS[dom]]]);
-  const at = rows.findIndex((r) => String(r[1]) === name);
-  if (at >= 0) sh.getRange(at + 2, 1, 1, 8).setValues([row]);
+  const row = [new Date(), no, safe_(nick_(d.nick))].concat(vals, [NEED_KOR[NEEDS[dom]]]);
+  const at = rows.findIndex((r) => Number(r[1]) === no);
+  if (at >= 0) sh.getRange(at + 2, 1, 1, COLS).setValues([row]);
   else sh.appendRow(row);
   return json_({ ok: true });
 }
 
 function list_() {
-  const students = rows_().filter((r) => r[1] !== '').map((r) => {
+  const students = rows_().filter((r) => no_(r[1])).map((r) => {
     const scoresSum = {};
-    NEEDS.forEach((k, i) => { scoresSum[k] = Number(r[2 + i]) || 0; });
-    const top = NEEDS.filter((k) => NEED_KOR[k] === String(r[7]))[0] || '';
-    return { name: String(r[1]), scoresSum: scoresSum, top: top, time: r[0] ? Utilities.formatDate(new Date(r[0]), 'Asia/Seoul', 'M/d HH:mm') : '' };
+    NEEDS.forEach((k, i) => { scoresSum[k] = Number(r[3 + i]) || 0; });
+    const top = NEEDS.filter((k) => NEED_KOR[k] === String(r[8]))[0] || '';
+    return { no: Number(r[1]), nick: String(r[2] || ''), scoresSum: scoresSum, top: top, time: r[0] ? Utilities.formatDate(new Date(r[0]), 'Asia/Seoul', 'M/d HH:mm') : '' };
   });
   return json_({ ok: true, students: students, joinCode: joinCode_() });
 }
 
 function remove_(d) {
-  const name = name_(d.name);
+  const no = no_(d.no);
   const rows = rows_();
-  for (let i = rows.length - 1; i >= 0; i--) if (String(rows[i][1]) === name) sheet_().deleteRow(i + 2);
+  for (let i = rows.length - 1; i >= 0; i--) if (Number(rows[i][1]) === no) sheet_().deleteRow(i + 2);
   return list_();
 }
 
