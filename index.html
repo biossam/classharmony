@@ -337,6 +337,10 @@
           <h2 class="text-2xl font-bold text-slate-900 custom-title">나의 마음 욕구 알아보기</h2>
           <p class="text-sm text-slate-500">내 번호와 선생님이 알려 준 입장 코드를 넣어요.</p>
         </div>
+        <p class="max-w-sm mx-auto text-[12px] leading-relaxed text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-left">
+          📝 <b>왜 하나요?</b> 내가 무엇을 할 때 힘이 나는지 알아보고, 모둠 활동에서 잘 맞는 역할을 찾으려고 해요. 성적에는 들어가지 않아요.<br>
+          🔒 <b>누가 보나요?</b> 답은 <b>번호·닉네임·점수</b>로만 저장되고 <b>선생님만</b> 봐요. 친구들은 볼 수 없어요.
+        </p>
         <div class="max-w-xs mx-auto space-y-4">
           <div class="text-left">
             <label for="student-input-no" class="text-xs font-bold text-slate-500 ml-1">내 번호</label>
@@ -1326,6 +1330,8 @@
       document.getElementById('student-login-msg').textContent = '';
       showStep('student-step-login');
     }
+    // 흔한 성씨 (닉네임이 '김도윤'처럼 실명 모양인지 볼 때만 씀)
+    const NAME_SURNAMES = '김이박최정강조윤장임한오서신권황안송류전홍고문양손배백허유남심노하곽성차주우구민나진지엄채원천방공현함변염여추도소석선설마길연위표명기반왕금옥육인맹제모탁국어은편용예봉경'.split('');
     // 닉네임: 8자까지, 띄어쓰기 하나로, 화면을 깨는 기호는 뺌
     const cleanNick = (t) => String(t || '').replace(/[<>"'`=]/g, '').replace(/\s+/g, ' ').trim().slice(0, 8);
     async function startStudentSurvey() {
@@ -1336,6 +1342,18 @@
       const msg = document.getElementById('student-login-msg');
       if (!(Number.isInteger(no) && no >= 1 && no <= 40)) { msg.textContent = '내 번호를 1~40 사이로 넣어 주세요.'; return; }
       if (!code) { msg.textContent = '입장 코드를 입력해 주세요.'; return; }
+      // 닉네임이 실명처럼 보이면 한 번 더 확인 (명단에 있는 이름이면 막음)
+      if (nick) {
+        const bare = nick.replace(/\s/g, '');
+        const inRoster = roster().some((r) => { const n = String(r.name || '').replace(/\s/g, ''); return n && (bare.includes(n) || (n.length >= 2 && bare.includes(n.slice(1)) && n.slice(1).length >= 2)); });
+        if (inRoster) { msg.textContent = '🙈 닉네임에 진짜 이름이 들어 있어요. 다른 닉네임으로 바꿔 주세요.'; return; }
+        const looksLikeName = /^[가-힣]{3}$/.test(bare) && NAME_SURNAMES.includes(bare[0]);
+        if (looksLikeName && startStudentSurvey._ok !== nick) {
+          startStudentSurvey._ok = nick;
+          msg.textContent = '🙈 진짜 이름처럼 보여요. 이름이면 지우고, 이름이 아니면 시작하기를 한 번 더 눌러요.';
+          return;
+        }
+      }
       // 연결 모드: 시트에 코드를 물어봄 / 이 기기 모드: 바로 확인
       if (connected()) {
         msg.textContent = '확인하는 중…';
