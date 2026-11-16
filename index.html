@@ -269,7 +269,7 @@
           <button onclick="runHarmoniousMatching()" class="w-full py-3.5 bg-indigo-500 hover:bg-indigo-400 text-slate-900 text-sm font-bold rounded-xl flex items-center justify-center gap-2">
             <i class="fa-solid fa-puzzle-piece text-base"></i>모둠 만들기
           </button>
-          <p class="text-[11px] text-slate-500 leading-relaxed">※ 25문항 자기 보고 결과라 <b>참고 자료</b>예요. 친구 관계, 학습 수준, 도움이 필요한 학생은 선생님이 결과에서 이름을 눌러 직접 바꿔 주세요.</p>
+          <p class="text-[11px] text-slate-500 leading-relaxed">※ 50문항 자기 보고 결과라 <b>참고 자료</b>예요. 친구 관계, 학습 수준, 도움이 필요한 학생은 선생님이 결과에서 이름을 눌러 직접 바꿔 주세요.</p>
         </div>
       </div>
 
@@ -369,7 +369,7 @@
             <span class="text-xs font-bold text-slate-500">나에게 맞는 답을 골라요</span>
             <h4 id="survey-student-name" class="font-bold text-slate-800 text-base"></h4>
           </div>
-          <span id="survey-progress-text" class="hand text-2xl text-slate-900">1 / 25</span>
+          <span id="survey-progress-text" class="hand text-2xl text-slate-900">1 / 50</span>
         </div>
         <div class="w-full bg-slate-100 h-2">
           <div id="survey-progress-bar" class="bg-indigo-500 h-2 rounded-r-full transition-all duration-300" style="width: 4%;"></div>
@@ -431,8 +431,8 @@
               <p id="student-result-roles" class="text-sm font-bold text-indigo-700 mt-0.5 leading-relaxed"></p>
             </div>
             <div>
-              <span class="text-xs font-extrabold text-slate-500 block">🌱 친구와 함께할 때 기억해요</span>
-              <p id="student-result-harmony-tip" class="text-sm text-slate-700 leading-relaxed mt-0.5"></p>
+              <span class="text-xs font-extrabold text-slate-500 block">🌱 나에게 주는 조언</span>
+              <ul id="student-result-advice" class="text-sm text-slate-700 leading-relaxed mt-1 space-y-1"></ul>
             </div>
           </div>
         </div>
@@ -518,37 +518,162 @@
     };
 
 
-    // 욕구 진단 문항 (욕구마다 5문항, 모두 25문항)
+    // 욕구 진단 문항: 선생님 자료 「5가지 욕구」 체크리스트 (욕구마다 10문항, 모두 50문항)
+    // 묻는 순서는 아래 SURVEY에서 욕구가 돌아가며 섞이게 함
     const QUESTIONS = [
-      { id: 1, type: "survival", text: "나는 내 자리나 방이 깨끗하게 정리되어 있으면 마음이 편하다." },
-      { id: 2, type: "survival", text: "나는 정해진 규칙과 시간표대로 생활하는 것이 좋다." },
-      { id: 3, type: "survival", text: "나는 다치지 않게 조심해서 행동하는 편이다." },
-      { id: 4, type: "love", text: "나는 혼자 공부할 때보다 친구들과 모둠 활동을 할 때 더 힘이 난다." },
-      { id: 5, type: "love", text: "나는 속상해하는 친구가 있으면 먼저 다가가 돕고 싶다." },
-      { id: 6, type: "love", text: "나는 우리 반 친구들과 사이좋게 지내는 것이 중요하다." },
-      { id: 7, type: "power", text: "나는 모둠에서 이끄는 역할을 맡고 싶다." },
-      { id: 8, type: "power", text: "나는 무언가를 잘 해내서 칭찬받으면 무척 기쁘다." },
-      { id: 9, type: "power", text: "나는 친구들 앞에서 내 생각을 말하는 것에 자신이 있다." },
-      { id: 10, type: "freedom", text: "나는 정해진 방법보다 나만의 방법으로 해 보는 것이 좋다." },
-      { id: 11, type: "freedom", text: "나는 누가 이것저것 시키기보다 스스로 정해서 하는 것이 좋다." },
-      { id: 12, type: "freedom", text: "나는 딱딱한 분위기보다 편하게 내 생각을 말할 수 있을 때 더 잘한다." },
-      { id: 13, type: "fun", text: "나는 친구들을 웃게 만들 때 기분이 좋다." },
-      { id: 14, type: "fun", text: "나는 퀴즈나 게임으로 배울 때 공부가 더 잘 된다." },
-      { id: 15, type: "fun", text: "나는 궁금한 것이 생기면 푹 빠져서 시간 가는 줄 모른다." },
-      { id: 16, type: "survival", text: "나는 새로운 일을 시작하기 전에 무엇을 준비해야 하는지 미리 알고 싶다." },
-      { id: 17, type: "survival", text: "나는 계획이 갑자기 바뀌면 마음이 불편하다." },
-      { id: 18, type: "love", text: "나는 친구가 나를 반갑게 맞아 줄 때 하루 종일 기분이 좋다." },
-      { id: 19, type: "love", text: "나는 친구들과 함께 무언가를 해냈을 때 가장 뿌듯하다." },
-      { id: 20, type: "power", text: "나는 어려운 문제를 끝까지 풀어냈을 때 무척 자랑스럽다." },
-      { id: 21, type: "power", text: "나는 내가 잘하는 것을 다른 사람에게 보여 주고 싶다." },
-      { id: 22, type: "freedom", text: "나는 무엇을 할지 내가 직접 고를 수 있을 때 더 열심히 한다." },
-      { id: 23, type: "freedom", text: "나는 하나하나 정해 주는 대로만 해야 하면 답답하다." },
-      { id: 24, type: "fun", text: "나는 새로운 것을 배우고 해 보는 것 자체가 즐겁다." },
-      { id: 25, type: "fun", text: "나는 놀이처럼 배우면 시간 가는 줄 모른다." }
+      { id: 1, type: "survival", text: "돈이나 물건을 절약한다." },
+      { id: 2, type: "survival", text: "원하는 것을 살 수 있는 돈이 있을 때 든든하다." },
+      { id: 3, type: "survival", text: "나의 건강에 관심을 가지고 있다." },
+      { id: 4, type: "survival", text: "잘 챙겨 먹으려고 노력한다." },
+      { id: 5, type: "survival", text: "학교의 규칙을 지키려고 하는 편이다." },
+      { id: 6, type: "survival", text: "상식이나 규범에서 벗어나지 않으려 한다." },
+      { id: 7, type: "survival", text: "돈이 있으면 모아 놓거나 저축하는 편이다." },
+      { id: 8, type: "survival", text: "위험해 보이는 일은 피하고 싶다." },
+      { id: 9, type: "survival", text: "내 외모가 단정해 보이는 것이 좋다." },
+      { id: 10, type: "survival", text: "쓸 수 있는 물건은 버리지 않고 간직한다." },
+      { id: 11, type: "love", text: "나는 사랑과 관심을 많이 필요로 한다." },
+      { id: 12, type: "love", text: "다른 사람의 고민이나 상황에 관심이 있다." },
+      { id: 13, type: "love", text: "친구를 위해 시간을 낸다." },
+      { id: 14, type: "love", text: "새 학기에 처음 만난 친구에게 말을 건다." },
+      { id: 15, type: "love", text: "사람들과 함께 있는 것을 좋아한다." },
+      { id: 16, type: "love", text: "아는 사람과는 가깝고 친밀하게 지낸다." },
+      { id: 17, type: "love", text: "선생님이 내게 관심을 가져 주길 바란다." },
+      { id: 18, type: "love", text: "다른 사람이 나를 좋아해 주기를 바란다." },
+      { id: 19, type: "love", text: "다른 사람들에게 친절하게 대한다." },
+      { id: 20, type: "love", text: "부모님이 나의 모든 것을 좋아해 주기를 바란다." },
+      { id: 21, type: "power", text: "내가 하는 일로 사람들에게 인정받고 싶다." },
+      { id: 22, type: "power", text: "다른 사람이나 친구에게 충고나 조언을 잘 한다." },
+      { id: 23, type: "power", text: "다른 사람이나 친구에게 무엇을 하라고 잘 시킨다." },
+      { id: 24, type: "power", text: "옳다고 생각되면 주장하고 이루려고 한다." },
+      { id: 25, type: "power", text: "사람들에게 칭찬 듣는 것을 좋아한다." },
+      { id: 26, type: "power", text: "친구가 무리한 부탁을 할 때 거절할 수 있다." },
+      { id: 27, type: "power", text: "내가 하는 일에서 최고가 되고 싶다." },
+      { id: 28, type: "power", text: "집단의 리더가 되고 싶다." },
+      { id: 29, type: "power", text: "내가 속한 집단이 내가 원하는 방향으로 나아가길 원한다." },
+      { id: 30, type: "power", text: "내가 이룬 것과 나의 재능을 자랑스럽게 여긴다." },
+      { id: 31, type: "freedom", text: "사람들이 내게 어떻게 하라고 지시하는 것이 싫다." },
+      { id: 32, type: "freedom", text: "내가 원하지 않는 일을 하라고 하면 싫다." },
+      { id: 33, type: "freedom", text: "다른 사람에게 어떻게 살아야 한다고 강요하면 안 된다고 생각한다." },
+      { id: 34, type: "freedom", text: "누구나 자유롭게 선택할 수 있도록 존중해 주어야 한다." },
+      { id: 35, type: "freedom", text: "내가 하고 싶은 일을, 하고 싶을 때 하고 싶다." },
+      { id: 36, type: "freedom", text: "다른 사람 눈치를 보지 않고 내가 하고 싶은 대로 살고 싶다." },
+      { id: 37, type: "freedom", text: "누구나 인생을 자기 뜻대로 살 권리가 있다고 믿는다." },
+      { id: 38, type: "freedom", text: "한 가지를 오래 하는 것이 어렵다." },
+      { id: 39, type: "freedom", text: "친구의 의견이 나와 달라도 존중한다." },
+      { id: 40, type: "freedom", text: "계획된 일이 다르게 진행되어도 크게 상관없다." },
+      { id: 41, type: "fun", text: "큰 소리로 웃기 좋아한다." },
+      { id: 42, type: "fun", text: "유머를 사용하거나 듣는 것이 즐겁다." },
+      { id: 43, type: "fun", text: "나 자신이 웃겨서 웃을 때가 있다." },
+      { id: 44, type: "fun", text: "유익하거나 새로운 것을 배우는 것이 즐겁다." },
+      { id: 45, type: "fun", text: "재미있는 게임이나 놀이를 좋아한다." },
+      { id: 46, type: "fun", text: "여행하기를 좋아한다." },
+      { id: 47, type: "fun", text: "독서를 좋아한다." },
+      { id: 48, type: "fun", text: "영화나 음악 감상을 좋아한다." },
+      { id: 49, type: "fun", text: "호기심이 많다." },
+      { id: 50, type: "fun", text: "새로운 방식으로 일하거나 생각해 보는 것이 즐겁다." }
     ];
 
 
+
     
+    // 선생님 자료 「5가지 욕구」: 욕구가 높은 친구 특징(교사 화면만), 낮을 때 모습(교사 화면만), 나에게 주는 조언(학생 결과)
+    const NEED_EXTRA = {
+      "survival": {
+        "traits": [
+          "수업이 원래 계획대로 진행되어야 안정감을 느낌",
+          "불확실한 미래에 대한 불안감이 상대적으로 큼",
+          "자기 자리가 깔끔하고 정리정돈이 잘되어 있음",
+          "다른 친구들이 자기 물건을 함부로 쓰는 것을 싫어함",
+          "주어진 용돈 안에서 지출하거나 용돈이 적어도 저축함",
+          "규칙적인 생활 패턴을 유지하고 건강에 대한 관심이 높음",
+          "숙제는 미리 하는 편이고 실수가 거의 없음"
+        ],
+        "low": "즉흥적으로 행동하거나 실수가 많을 수 있음",
+        "advice": [
+          "나를 힘들게 하는 지나친 규칙이 있는지 점검하기",
+          "스스로에게 \"괜찮아\"라고 자주 말해 주기",
+          "인생을 즐기며 살아라, 좀 놀아도 된다"
+        ]
+      },
+      "love": {
+        "traits": [
+          "친구들과 함께 놀거나 수다 떠는 것을 좋아함",
+          "친구나 선생님을 잘 배려함",
+          "친구나 선생님의 감정과 욕구를 잘 알아차리고 배려함",
+          "친구들끼리 갈등 상황에 놓이는 것을 매우 불편하게 생각함",
+          "수업 시간 발표 시 다양한 표정과 억양으로 이야기함",
+          "낯선 사람들과는 어색하지만 일단 친하게 되면 격의 없이 대하고 잘 챙김",
+          "친구들과의 관계가 틀어지면 잘 삐지거나 정반대로 감정적으로 대립할 수 있음",
+          "문제가 생기면 자책하기 쉬움, 교사나 친구들의 말에 쉽게 상처를 받을 수 있음"
+        ],
+        "low": "혼자서도 잘 놀고, 주변 친구들에게 \"정이 없다\"라는 말을 들을 수 있음",
+        "advice": [
+          "홀로 설 수 있는 사람이 함께 있어도 행복할 수 있어",
+          "사람 관계 때문에 내 할 일 미루지 않기",
+          "다른 사람이 원하지 않는 배려 하지 않기",
+          "화를 낼 일이 있다면 건강하게 표현하기"
+        ]
+      },
+      "power": {
+        "traits": [
+          "수업 시간 토의·토론 시 자기 의견을 적극적으로 주장함",
+          "많은 친구들 앞에서도 긴장하지 않고 당당하게 말함",
+          "교사에게 인정받지 못하면 친구 등 다른 사람에게 인정받기 위해 노력함",
+          "자신감이 넘치고 활동적임",
+          "컴퓨터 게임이나 각종 체육 대회에서 승리하기 위해 노력함",
+          "자기보다 힘이 센 사람에게 잘 따르지만 그렇지 않은 사람은 상대적으로 무시하는 편임",
+          "친구들 안에서도 자기 의견대로 이루어지기 바람",
+          "또래 친구 그룹에서 자기가 영향력을 발휘할 수 없다고 생각하면 아예 빠지려고 함"
+        ],
+        "low": "교사나 친구들이 하자고 하는 것에 대하여 잘 따르거나 순응함",
+        "advice": [
+          "힘을 어떻게 쓰는 사람으로 살 것인가?",
+          "다른 사람에게 예의 있게 대하는 방법을 배워 예의 있게 행동하기",
+          "다른 사람의 말에 귀 기울이기",
+          "\"해라\"가 아닌 \"하자\"라는 말에 익숙해지기"
+        ]
+      },
+      "freedom": {
+        "traits": [
+          "혼자 있는 것을 즐김",
+          "다른 친구들에게 부담을 주지 않으려고 함",
+          "기존 교실 규칙이나 교사의 지시를 무시하는 경향이 있음",
+          "약속을 잘 기억하지 못함",
+          "시간 개념이 없음",
+          "다른 사람에게 부담을 주지 않기 위해 혼자 일함",
+          "사람에 매이는 것을 싫어함",
+          "창의적으로 문제를 해결함",
+          "새로운 것에 대한 호기심이 있고, 남들이 잘 해 보지 못한 행동을 잘 시도함"
+        ],
+        "low": "",
+        "advice": [
+          "마음대로가 자유는 아니야",
+          "남에게 피해를 주거나, 비도덕적이거나, 위험해지는 자유는 스스로 제한하기",
+          "매이기 싫은 부분이 있겠지만 해야 할 일 잊지 않기",
+          "많은 경험 해 보기"
+        ]
+      },
+      "fun": {
+        "traits": [
+          "노는 것이나 게임하는 것을 좋아함",
+          "어떤 일을 해도 나는 잘할 것이라고 생각함",
+          "표정이 밝고 잘 웃음",
+          "농담이나 장난을 통해 다른 친구를 웃기는 것을 좋아함",
+          "주변에 자기를 좋아하는 친구들이 많은 편임",
+          "새로운 것에 호기심이 많고 쉽게 싫증을 내기도 하지만 관심사에 대한 몰입도가 높음(덕후 기질)",
+          "영화, 만화 등을 좋아하고 취미 생활을 중요시 여김",
+          "너무 진지하거나 어두운 분위기가 되면 어색함을 느끼고 분위기 전환을 시도함"
+        ],
+        "low": "",
+        "advice": [
+          "모두가 너처럼 즐겁지는 않아",
+          "다른 사람의 마음 헤아리기",
+          "예술 관련 취미 생활을 갖기",
+          "호기심이 생기면 과감하게 행동하기"
+        ]
+      }
+    };
+
 // 예시 데이터 (가짜 학생 19명, "예시 데이터로 체험"을 눌렀을 때만 보임)
     const PRESET_STUDENTS = [
       { name: "김도윤", scoresSum: { survival: 8, love: 11, power: 14, freedom: 9, fun: 10 }, dominantNeed: "power", group: null },
@@ -678,13 +803,14 @@
     let needsChart = null;
     let localStudentMode = false;
     let renderedRoster = null;
+    const openTraits = new Set(); // 교사 표에서 '특징 보기'를 펼친 학생
 
     const connected = () => Boolean(api);
     function save() { store.set('class_harmony_state_v3', appState); }
     // 화면에 보여 줄 학생 목록: 예시 → 예시, 연결 → 시트, 아니면 이 기기
     // 학생마다 id(번호)로 찾고, name은 화면에 보여 줄 이름: 선생님 명단에 있으면 실명, 없으면 "7번 닉네임"
     function students() {
-      if (appState.demo) return PRESET_STUDENTS.map((s, i) => ({ id: String(i + 1), no: i + 1, nick: '', name: s.name, scoresSum: s.scoresSum }));
+      if (appState.demo) return PRESET_STUDENTS.map((s, i) => ({ id: String(i + 1), no: i + 1, nick: '', name: s.name, scoresSum: Object.fromEntries(NEED_KEYS.map((k) => [k, s.scoresSum[k] * 2])) }));
       const rm = new Map(roster().map((r) => [String(r.no), r.name]));
       return (connected() ? serverStudents : appState.local).map((s) => {
         const id = String(s.no);
@@ -950,18 +1076,32 @@
         const d = dominantOf(s), info = NEEDS_INFO[d], g = groupOf(s.id);
         const sub = [s.name !== tagOf(s) && !appState.demo ? tagOf(s) : '', s.time ? s.time + ' 제출' : ''].filter(Boolean).join(' · ');
         return `<tr class="hover:bg-slate-50/50">
-          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(s.id) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${sub ? `<span class="block text-[10px] text-slate-500">${esc(sub)}</span>` : ''}</td>
+          <td class="px-5 py-3"><span class="font-bold text-slate-900">${esc(s.name)}</span>${renderedRoster && !renderedRoster.inRoster.has(s.id) ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100">명단에 없음</span>' : ''}${sub ? `<span class="block text-[10px] text-slate-500">${esc(sub)}</span>` : ''}<button class="no-print block mt-1 text-[11px] font-bold text-indigo-700 underline" data-traits="${esc(s.id)}" aria-expanded="${openTraits.has(s.id)}">${openTraits.has(s.id) ? '특징 접기' : '특징 보기'}</button></td>
           <td class="px-5 py-3 whitespace-nowrap"><span class="px-2.5 py-1.5 rounded-lg text-xs font-bold border ${BADGE[d]}">${info.emoji} ${info.kor}</span> <span class="text-xs text-slate-500">${(() => { const r = rankOf(s); return (s.scoresSum[r[0]] === s.scoresSum[r[1]] ? '2위(동점) ' : '2위 ') + NEEDS_INFO[r[1]].emoji + ' ' + NEEDS_INFO[r[1]].kor; })()}</span></td>
           ${NEED_KEYS.map((k) => `<td class="px-3 py-3 text-center font-medium ${k === d ? 'text-indigo-700 font-bold' : ''}">${Number(s.scoresSum[k]) || 0}</td>`).join('')}
           <td class="px-3 py-3 text-center">${g ? `<span class="bg-indigo-500 text-slate-900 font-bold px-2 py-1 rounded text-xs">${g}모둠</span>` : '<span class="text-slate-300">-</span>'}</td>
           <td class="px-3 py-3 text-center">${appState.demo ? '' : `<button class="text-slate-500 hover:text-rose-600" data-del="${esc(s.id)}" aria-label="${esc(s.name)} 결과 지우기"><i class="fa-solid fa-trash-can"></i></button>`}</td>
-        </tr>`;
+        </tr>${openTraits.has(s.id) ? traitsRow(s) : ''}`;
       }).join('');
     }
     document.addEventListener('click', (e) => {
       const b = e.target.closest('[data-del]');
       if (b) removeStudent(b.dataset.del);
+      const t = e.target.closest('[data-traits]');
+      if (t) { const id = t.dataset.traits; openTraits.has(id) ? openTraits.delete(id) : openTraits.add(id); renderStudentTable(students()); }
     });
+    // 선생님만 보는 참고: 1·2순위 욕구가 높은 친구의 특징, 가장 낮은 욕구가 낮을 때 모습 (학생 화면·인쇄물에는 나오지 않음)
+    function traitsRow(s) {
+      const r = rankOf(s), low = r[4];
+      const block = (k, title) => `<div><p class="text-xs font-extrabold text-slate-700 mb-1">${NEEDS_INFO[k].emoji} ${NEEDS_INFO[k].kor} 욕구가 높은 친구 특징 <span class="font-medium text-slate-500">(${title})</span></p>
+        <ul class="text-xs text-slate-600 leading-relaxed list-disc pl-4 space-y-0.5">${NEED_EXTRA[k].traits.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`;
+      const lowLine = NEED_EXTRA[low].low && s.scoresSum[low] < s.scoresSum[r[3]]
+        ? `<p class="text-xs text-rose-700 mt-3"><b>가장 낮은 욕구: ${NEEDS_INFO[low].emoji} ${NEEDS_INFO[low].kor}</b> — ${NEEDS_INFO[low].kor} 욕구가 낮으면 ${esc(NEED_EXTRA[low].low)}</p>` : '';
+      return `<tr class="no-print bg-slate-50"><td colspan="9" class="px-5 py-4">
+        <div class="grid md:grid-cols-2 gap-4">${block(r[0], '1순위')}${block(r[1], '2순위')}</div>${lowLine}
+        <p class="text-[11px] text-slate-500 mt-3">선생님 참고용이에요. 모든 특징이 이 학생에게 맞지는 않으니, 실제 모습과 견주어 보세요. 학생 화면과 인쇄물에는 나오지 않아요.</p>
+      </td></tr>`;
+    }
 
     // ── 모둠 배치 알고리즘 ──
     // 같은 모둠이 되면 안 되는 쌍: "3-12" 처럼 번호로, 또는 화면에 보이는 이름으로. id 쌍으로 돌려줌
@@ -1420,11 +1560,11 @@
       QUESTIONS.forEach((q) => { sums[q.type] += answers[q.id]; });
       return sums;
     }
-    // 25문항을 다 답한 뒤: 거의 같은 답만 골랐는지 → 1순위 동점인지 → 결과
+    // 모든 문항을 다 답한 뒤: 거의 같은 답만 골랐는지 → 1순위 동점인지 → 결과
     function finishAnswers() {
       const vals = Object.values(currentSurveyState.answers);
       const most = Math.max(...[1, 2, 3, 4, 5].map((v) => vals.filter((x) => x === v).length));
-      if (most >= SURVEY.length - 2 && !currentSurveyState.keep) { showStep('student-step-check'); return; }
+      if (most >= Math.ceil(SURVEY.length * 0.92) && !currentSurveyState.keep) { showStep('student-step-check'); return; }
       askTieOrFinish();
     }
     function redoSurvey() {
@@ -1459,7 +1599,7 @@
       document.getElementById('student-result-need-desc').textContent = info.needDesc;
       document.getElementById('student-result-strength').textContent = JOBS.balance[rk[0]].strength;
       document.getElementById('student-result-roles').textContent = rolesFor(rk[0]);
-      document.getElementById('student-result-harmony-tip').textContent = info.harmonyTip;
+      document.getElementById('student-result-advice').innerHTML = NEED_EXTRA[rk[0]].advice.map((t) => `<li class="flex gap-2"><span class="text-indigo-500">✓</span><span>${esc(t)}</span></li>`).join('');
       showStep('student-step-result');
       if (connected()) submitToServer();
       else {

@@ -81,7 +81,7 @@ function submit_(d) {
   if (!no) return json_({ ok: false, error: '번호를 1~40 사이로 넣어 주세요.' });
   const s = d.scores || {};
   const vals = NEEDS.map((k) => Number(s[k]));
-  if (vals.some((v) => !(v >= 5 && v <= 25) || Math.round(v) !== v)) return json_({ ok: false, error: '설문 점수가 올바르지 않아요.' });
+  if (vals.some((v) => !(v >= 10 && v <= 50) || Math.round(v) !== v)) return json_({ ok: false, error: '설문 점수가 올바르지 않아요.' });
   // 대표 욕구: 가장 높은 점수. 같은 점수가 여럿이면 학생이 마지막에 고른 것(top)
   const max = Math.max.apply(null, vals);
   let dom = vals.indexOf(max);
